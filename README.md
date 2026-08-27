@@ -1,6 +1,6 @@
 # 날씨 (Weather) Mockup — Vue 3 실습
 
-같은 날씨 서비스를 실습 회차별로 고도화하는 과제입니다. 최종 제출 코드는 하나(`WeatherMockup.vue`)지만, 이 README는 **어떤 실습에서 어떤 요구사항을 구현했는지**를 회차별로 정리한 문서입니다.
+같은 날씨 서비스를 실습 회차별로 고도화하는 과제입니다. 최종 제출 코드는 하나(`WeatherMockup.vue`)지만 이 README는 어떤 실습에서 어떤 요구사항을 구현했는지를 회차별로 정리한 문서입니다.
 
 ---
 
@@ -25,12 +25,12 @@
 ### 3. 양방향 바인딩 및 한글 처리
 
 - 도시 이름을 한글로 검색하는 input을 `v-model`로 구현했습니다.
-- 앞뒤 공백(trim)은 input에서 직접 처리하지 않고, **필터링하는 시점(computed 내부)**에서만 처리했습니다. `v-model.trim`처럼 `input` 이벤트에서 DOM 값을 직접 덮어쓰는 방식은 한글(IME) 조합 입력과 충돌해 타이핑 중 글자가 어긋나는 문제가 있었기 때문입니다.
+- 앞뒤 공백(trim)은 input에서 직접 처리하지 않고 필터링하는 시점(computed 내부)에서만 처리했습니다. `v-model.trim`처럼 `input` 이벤트에서 DOM 값을 직접 덮어쓰는 방식은 한글(IME) 조합 입력과 충돌해 타이핑 중 글자가 어긋나는 문제가 있었기 때문입니다.
 
 ### 4. 이벤트 및 수식어
 
 - 지역별 날씨 현황 카드를 클릭하면 상태바에 `"{도시}이 선택되었습니다."`가 표시됩니다.
-- 카드 내부의 `[상세보기]` 버튼을 누르면 `@click.stop`으로 카드 클릭(선택) 이벤트로의 버블링을 막고, 해당 도시의 날씨 내용만 `window.alert`로 단독으로 띄웁니다.
+- 카드 내부의 `[상세보기]` 버튼을 누르면 `@click.stop`으로 카드 클릭(선택) 이벤트로의 버블링을 막고 해당 도시의 날씨 내용만 `window.alert`로 단독으로 띄웁니다.
 
 ```js
 function showDetail(cityName, status) {
@@ -75,7 +75,7 @@ const searchQuery = ref('')          // 검색어
 const selectedCityInfo = ref(null)   // 선택된 도시 "객체 전체" (null = 미선택)
 ```
 
-> 실습 1에서는 `selectedCity`에 도시 **이름(문자열)**만 저장했지만, 실습 2에서는 `selectedCityInfo`에 도시 **객체 전체**를 저장하도록 바꿨습니다. (요구사항 명칭이 `selectedCityInfo`인 것도 이유지만, 객체를 들고 있으면 이후 다른 필드도 바로 참조할 수 있어 확장성이 좋습니다.)
+> 실습 1에서는 `selectedCity`에 도시 이름(문자열)만 저장했지만 실습 2에서는 `selectedCityInfo`에 도시 객체 전체를 저장하도록 바꿨습니다. (객체를 들고 있으면 이후 다른 필드도 바로 참조할 수 있어 확장성이 좋습니다.)
 
 ### 2. 검색 도시 (computed 활용)
 
@@ -123,11 +123,11 @@ const filteredWeatherList = computed(() => {
 
 ### 5. 본인만의 데이터, 반응형 상태 변수, Computed, Watcher
 
-실습 1의 5번(본인만의 데이터 추가)을 실습 2 단계에서 **날씨 기반 관광지 추천 기능**으로 확장하고, 여기에 필요한 반응형 상태/computed/watcher를 같이 구성했습니다.
+실습 1의 5번(본인만의 데이터 추가)을 실습 2 단계에서 **날씨 기반 관광지 추천 기능**으로 확장하고 여기에 필요한 반응형 상태/computed/watcher를 같이 구성했습니다.
 
 #### 5-1. 본인만의 데이터: 관광지 추천 데이터 (도시 10 × status 4 = 40개)
 
-관광지 데이터를 만들기 전에 `status` 값을 **맑음 / 흐림 / 비 / 눈** 4가지로 확정했습니다. (기존에 있던 "구름"은 흐림·눈 등으로 재배치) 그리고 도시마다 4가지 날씨 상황에 맞는 관광지를 하나씩 매핑해 총 40개의 추천 데이터를 만들었습니다.
+관광지 데이터를 만들기 전에 `status` 값을 **맑음 / 흐림 / 비 / 눈** 4가지로 확정했습니다. (기존에 있던 구름은 흐림·눈 등으로 재배치) 그리고 도시마다 4가지 날씨 상황에 맞는 관광지를 하나씩 매핑해 총 40개의 추천 데이터를 만들었습니다.
 
 ```js
 const attractionMap = {
@@ -157,7 +157,7 @@ const attractionMap = {
 }
 ```
 
-이 데이터를 바탕으로 만든 **`recommendedAttraction` computed**는 선택된 도시(`selectedCityInfo`) + 현재 날씨에 맞는 관광지를 뽑아서, 상태바 아래 추천 관광지 히어로 카드에 보여줍니다.
+이 데이터를 바탕으로 만든 **`recommendedAttraction` computed**는 선택된 도시(`selectedCityInfo`) + 현재 날씨에 맞는 관광지를 뽑아서 상태바 아래 추천 관광지 카드에 보여줍니다.
 
 ```js
 const recommendedAttraction = computed(() => {
@@ -192,7 +192,7 @@ function toggleStatusFilter(status) {
 
 #### 5-3. 본인만의 Computed: `weatherStatusCounts` → `indoorRecommendedCount`
 
-검색어만 반영한 목록(`searchFilteredList`)을 기준으로 맑음/흐림/비/눈 상태별 도시 수를 집계하고("지역 10개 중 어떤 날씨가 몇 곳인지" 통계), 여기서 비+눈 값을 더해 "실내 관광지 추천이 필요한 도시 수"로 재해석했습니다.
+검색어만 반영한 목록(`searchFilteredList`)을 기준으로 맑음/흐림/비/눈 상태별 도시 수를 집계하고(지역 10개 중 어떤 날씨가 몇 곳인지 통계) 여기서 비+눈 값을 더해 "실내 관광지 추천이 필요한 도시 수"로 재해석했습니다.
 
 ```js
 // 1) 검색어만 반영한 목록 (통계 칩 계산용 기준 — 필터 칩을 눌러도 이 목록은 줄어들지 않음)
@@ -222,11 +222,11 @@ const indoorRecommendedCount = computed(
 )
 ```
 
-> **버그 수정 노트**: 처음 구현에서는 `weatherStatusCounts`가 (검색어 + 날씨 필터까지 적용된) `filteredWeatherList`를 기준으로 집계해서, 칩 하나를 누르면 그 칩 자신을 제외한 나머지 통계가 전부 0으로 보이는 문제가 있었습니다. 통계 칩은 "필터 버튼"이면서 동시에 "필터링되지 않은 전체 통계"를 보여줘야 하는데, 자기 자신이 만든 필터링 결과를 다시 통계 내다 보니 자기참조 오류가 생긴 것입니다. `searchFilteredList`(검색어만 반영)를 별도로 두고 통계는 여기서 계산하도록 분리해서 해결했습니다.
+> **버그 수정**: 처음 구현에서는 `weatherStatusCounts`가 (검색어 + 날씨 필터까지 적용된) `filteredWeatherList`를 기준으로 집계해서 칩 하나를 누르면 그 칩 자신을 제외한 나머지 통계가 전부 0으로 보이는 문제가 있었습니다. 통계 칩은 필터 버튼이면서 동시에 필터링되지 않은 전체 통계를 보여줘야 하는데 자기 자신이 만든 필터링 결과를 다시 통계 내다 보니 자기참조 오류가 생겼습니다. `searchFilteredList`(검색어만 반영)를 별도로 두고 통계는 여기서 계산하도록 분리해서 해결했습니다.
 
 #### 5-4. 본인만의 Watcher: `watch(indoorRecommendedCount, ...)`
 
-검색어나 날씨 필터가 바뀌어 목록이 달라질 때마다, 실내 추천 도시 수가 어떻게 바뀌는지 콘솔로그로 작성합니다.
+검색어나 날씨 필터가 바뀌어 목록이 달라질 때마다 실내 추천 도시 수가 어떻게 바뀌는지 콘솔로그로 작성합니다.
 
 ```js
 watch(indoorRecommendedCount, (newCount, oldCount) => {
@@ -234,11 +234,11 @@ watch(indoorRecommendedCount, (newCount, oldCount) => {
 })
 ```
 
-화면에는 지역별 날씨 현황 제목 옆에 `☀️ 3 · 🌥️ 3 · 🌧️ 2 · ❄️ 2` 통계 칩이 있고 이 칩 자체가 필터 버튼입니다. 필터가 걸려 있으면 그 아래에 "OO인 도시만 보고 있어요 · 전체 보기" 안내가 뜨고, "지금 N곳은 비·눈이 와서 실내 관광지를 추천드려요." 안내는 필터/검색 결과에 맞춰 실시간으로 갱신됩니다.
+화면에는 지역별 날씨 현황 제목 옆에 `☀️ 3 · 🌥️ 3 · 🌧️ 2 · ❄️ 2` 통계 칩이 있고 필터 버튼입 역할을 합니다. 필터가 걸려 있으면 그 아래에 "OO인 도시만 보고 있어요 · 전체 보기" 안내가 뜨고 "지금 N곳은 비·눈이 와서 실내 관광지를 추천드려요." 안내는 필터/검색 결과에 맞춰 실시간으로 갱신됩니다.
 
 ### 상태바 노출 방식 변경
 
-기존에는 도시를 선택하면 상태바에 `"OO"이 선택되었습니다.` 문구가 떴는데 바로 아래에 있는 추천 관광지 히어로 카드가 이미 어떤 도시가 선택됐는지 보여주기 때문에 문구가 중복이었습니다. 그래서 **아무것도 선택하지 않았을 때만** "카드를 클릭하거나 검색해 보세요." 안내를 보여주고, 도시를 선택하면 이 영역 자체가 사라지도록 바꿨습니다.
+기존에는 도시를 선택하면 상태바에 `"OO"이 선택되었습니다.` 문구가 떴는데 바로 아래에 있는 추천 관광지 히어로 카드가 이미 어떤 도시가 선택됐는지 보여주기 때문에 문구가 중복이었습니다. 그래서 **아무것도 선택하지 않았을 때만** "카드를 클릭하거나 검색해 보세요." 안내를 보여주고 도시를 선택하면 이 영역 자체가 사라지도록 바꿨습니다.
 
 ```html
 <div class="status-bar status-bar--muted" v-if="!selectedCityInfo">
@@ -248,9 +248,10 @@ watch(indoorRecommendedCount, (newCount, oldCount) => {
 
 ---
 
-## 관광지 이미지 자산 안내
+## 관광지 이미지 저장
 
-관광지 이미지는 `public/attractions/` 폴더에 넣도록 설계했습니다. Vite 프로젝트에서 `public/` 폴더에 넣은 파일은 빌드 시 그대로 복사되고, 코드에서 `import` 없이 `/attractions/파일명.jpg`처럼 절대경로 문자열로 바로 참조할 수 있어서 40장 가까운 이미지를 다룰 때 가장 간단합니다.
+관광지 이미지는 `public/attractions/` 폴더에 들어가도록 설계했습니다.
+하지만 이미지 수가 40장으로 너무 많아 해당 폴더에 이미지를 로컬로 저장하는 작업은 진행하지 않았습니다. (설계만 진행)
 
 ```
 public/
@@ -264,11 +265,9 @@ public/
     └── city_10_snowy.jpg   # 총 10개 도시 × 4개 status = 40장
 ```
 
-지금 각 도시에 지정된 status(예: 서울=맑음, 제주=비)에 해당하는 **10장만 넣어도** 화면에서 바로 보입니다. 나머지 30장은 이후 "날씨가 바뀌는" 기능을 만들 때를 대비해 데이터 구조만 미리 채워둔 것입니다.
-
 ### 이미지가 없을 때: 자동 placeholder
 
-`public/attractions/`에 아직 파일을 넣지 않았어도 레이아웃이 깨지지 않도록, `<img>`의 `@error` 이벤트를 활용해 이미지 로드에 실패하면 자동으로 [picsum.photos](https://picsum.photos) placeholder 사진으로 대체되게 만들었습니다. 관광지 이름별로 항상 같은 seed를 사용해서, 같은 관광지는 새로고침해도 같은 placeholder 사진이 나옵니다.
+`public/attractions/`에 이미지 파일을 넣지 않아도 레이아웃이 깨지지 않도록 `<img>`의 `@error` 이벤트를 활용해 이미지 로드에 실패하면 자동으로 [picsum.photos](https://picsum.photos) placeholder 사진으로 대체되게 만들었습니다. 관광지 이름별로 항상 같은 seed를 사용해서 같은 관광지는 새로고침해도 같은 placeholder 사진이 나옵니다. (현재 채택된 방식)
 
 ```js
 function handleImageError(event, seedText) {
@@ -278,7 +277,7 @@ function handleImageError(event, seedText) {
 }
 ```
 
-나중에 진짜 사진을 위 표의 파일명 그대로 `public/attractions/`에 넣기만 하면, **코드 수정 없이** 자동으로 실제 사진이 표시됩니다.
+나중에 진짜 사진을 위 표의 파일명 그대로 `public/attractions/`에 넣기만 하면 코드 수정 없이 자동으로 실제 사진이 표시됩니다.
 
 ---
 
@@ -292,7 +291,7 @@ function handleImageError(event, seedText) {
 
 - 모든 반응형 상태와 `computed`, `watch`/`watchEffect` 를 이 컴포넌트에 두었습니다.
 - 자식 컴포넌트가 emit한 이벤트를 받아 상태를 갱신하는 핸들러(`updateSearchQuery`, `clearSearch`, `selectCity`, `showDetail`, `toggleStatusFilter`, `clearStatusFilter`)를 정의했습니다.
-- 자식에게 필요한 파생 데이터는 부모가 미리 계산해서 props로 내려줍니다. 예를 들어 카드 하나하나에 필요한 관광지 정보는 `attractionOf(city)` 함수로 계산해 `WeatherCard`에 `attraction` prop으로 전달합니다. → **단방향 데이터 흐름**(부모 → 자식은 props, 자식 → 부모는 emit) 유지.
+- 자식에게 필요한 파생 데이터는 부모가 미리 계산해서 props로 내려줍니다. 예를 들어 카드 하나하나에 필요한 관광지 정보는 `attractionOf(city)` 함수로 계산해 `WeatherCard`에 `attraction` prop으로 전달합니다.
 
 ```html
 <WeatherCard
@@ -309,8 +308,8 @@ function handleImageError(event, seedText) {
 #### `BaseDashboardCard.vue` — 검색박스·리스트박스 공통 디자인
 
 - 검색 패널과 목록 패널이 똑같이 쓰는 흰색 카드형 패널 디자인(`.panel`, 제목 영역 `h2`)만 담당합니다.
-- 내용은 갖고 있지 않고, `<slot name="header">`(제목 영역)와 기본 `<slot />`(본문 영역) 두 개로 부모가 무엇을 넣을지 위임받습니다.
-- `WeatherParent.vue`에서 검색 패널, 목록 패널을 두 번 재사용됩니다.
+- 내용은 갖고 있지 않고 `<slot name="header">`(제목 영역)와 기본 `<slot />`(본문 영역) 두 개로 부모가 무엇을 넣을지 위임받습니다.
+- `WeatherParent.vue`에서 검색 패널, 목록 패널에서 두 번 재사용됩니다.
 
 ```html
 <BaseDashboardCard>
@@ -323,13 +322,6 @@ function handleImageError(event, seedText) {
 
 - **props**: `searchQuery` (부모의 검색어 상태를 그대로 전달받아 input에 표시)
 - **emits**: `update-query`(입력할 때마다 새 값을 부모에 전달), `reset`(초기화 버튼 클릭)
-- 실습 1에서 확인한 "IME 조합 중 글자가 어긋나는 문제"를 그대로 방지하기 위해, `v-model` 대신 `@input`에서 `event.target.value`를 그대로 emit하는 방식을 유지했습니다.
-
-```js
-function onInput(event) {
-  emit('update-query', event.target.value)
-}
-```
 
 #### `WeatherCard.vue` — 날씨 카드 한 장
 
@@ -351,14 +343,13 @@ function onInput(event) {
 | `WeatherStatusHints.vue`    | "N곳은 비·눈이 와서 실내 관광지 추천" 안내 + "OO인 도시만 보고 있어요 · 전체 보기" 안내 | `indoorRecommendedCount`, `statusFilter`             | `clear-filter`    |
 | `RecommendedAttraction.vue` | 선택 전 안내 문구(`status-bar--muted`) / 선택 후 추천 관광지 히어로 카드                | `selectedCityInfo`, `recommendedAttraction`          | (없음, 표시 전용) |
 
-- `WeatherStatusFilter`는 `BaseDashboardCard`의 `#header` 슬롯 안(제목 옆)에 들어가고 `WeatherStatusHints`는 그 아래 본문 영역에 들어가서 원본의 "제목 옆 칩 + 칩 아래 안내 문구"라는 배치를 그대로 재현했습니다.
-- `RecommendedAttraction`은 `selectedCityInfo`가 없으면 안내 문구를, 있으면 히어로 카드를 보여주는 로직을 그대로 캡슐화했습니다.
+- `WeatherStatusFilter`는 `BaseDashboardCard`의 `#header` 슬롯 안(제목 옆)에 들어가고 `WeatherStatusHints`는 그 아래 본문 영역에 들어가서 원본의 "제목 옆 칩 + 칩 아래 안내 문구" 배치입니다.
+- `RecommendedAttraction`은 `selectedCityInfo`가 없으면 안내 문구를 있으면 히어로 카드를 보여주는 로직입니다.
 
 ### 3. CSS 분리 (`<style scoped>`)
 
 - 원본 `WeatherMockup.vue`의 CSS를 어느 컴포넌트의 마크업에서 쓰이는가 기준으로 그대로 잘라서 각 컴포넌트의 `<style scoped>`로 옮겼습니다. (예: `.search-row`, `.search-field`, `input[type='text']`, `.reset-btn`, `.search-hint` → `SearchBar.vue` / `.card`, `.card-thumb`, `.badge` 등 → `WeatherCard.vue`)
 - 페이지 전역 레이아웃(`.page-bg`, `.hero-band`, `.content-area`)과 CSS 변수(`--ink`, `--accent`, `--panel-bg` 등)는 `WeatherParent.vue`에 남겼습니다.
-  - Vue의 `scoped` 스타일은 "이 셀렉터가 이 컴포넌트 안에서만 매칭된다"는 제약일 뿐 CSS 커스텀 프로퍼티(변수)는 실제 DOM 트리를 따라 정상적으로 상속됩니다. 따라서 `WeatherParent.vue`의 `.page-bg`에서 정의한 `var(--ink)` 등은 실제 렌더링 시 자식 컴포넌트(`SearchBar`, `WeatherCard` 등) 안에서도 그대로 사용할 수 있었습니다.
 - `.card-grid`, `.empty`(검색 결과 없음 안내)는 리스트 자체를 렌더링하는 마크업이 `WeatherParent.vue`의 템플릿에 남아 있어서 스타일도 그쪽에 함께 두었습니다.
 
 ### 4. 최종 파일 구조
@@ -444,11 +435,11 @@ const routes = [
 </div>
 ```
 
-- `<RouterLink>`로 대시보드/관광지 갤러리/서비스 소개 3개 메뉴를 연결하고, `<RouterView>`가 현재 라우트에 매칭된 View 컴포넌트를 그 자리에 렌더링합니다.
+- `<RouterLink>`로 대시보드/관광지 갤러리/서비스 소개 3개 메뉴를 연결하고 `<RouterView>`가 현재 라우트에 매칭된 View 컴포넌트를 그 자리에 렌더링합니다.
 
 ### 3. `WeatherHomeView.vue` — WeatherParent 대체, `/` 경로
 
-실습 3의 `WeatherParent.vue` 로직(반응형 상태·computed·watch·이벤트 핸들러)을 그대로 옮겨왔습니다. 달라진 부분은 상세보기 버튼의 동작 하나입니다.
+실습 3의 `WeatherParent.vue` 로직(반응형 상태·computed·watch·이벤트 핸들러)을 그대로 옮겨왔습니다. 이전과 달라진 부분은 상세보기 버튼의 동작 한가지입니다.
 
 ```js
 import { useRouter } from 'vue-router'
@@ -461,7 +452,7 @@ function showDetail(city) {
 }
 ```
 
-`useRouter()`로 라우터 인스턴스를 가져와 `router.push()`를 호출하는 방식(Programmatic Navigation)으로 바꿨습니다. 또한, `mock/WeatherData.js`에서 `weatherList`, `attractionMap`을 import해서 쓰기 때문에 이 View 자체에는 더 이상 데이터 정의 코드가 없습니다.
+`useRouter()`로 라우터 인스턴스를 가져와 `router.push()`를 호출하는 방식(Programmatic Navigation)으로 바꿨습니다.
 
 ### 4. `WeatherDetailView.vue` — 지역별 상세 기상관측 정보, `/weather/:cityId` 경로
 
@@ -487,13 +478,13 @@ watch(
 ```
 
 - `route.params.cityId`로 주소에 담긴 도시 코드를 읽어와서 `onMounted` 시점에 mock 데이터(`weatherList`)에서 해당 도시 객체를 찾아 선택합니다.
-- 온도/습도/풍속/기상현황 등 상세 기상관측 정보 5개 항목을 하나의 `.panel` 박스 안에 정리해서 보여주고, 그 아래에 이 도시·날씨에 맞는 추천 관광지 카드를 `RecommendedAttraction.vue`(실습 3 컴포넌트)를 그대로 재사용해서 붙였습니다.
+- 온도/습도/풍속/기상현황 등 상세 기상관측 정보 5개 항목을 하나의 `.panel` 박스 안에 정리해서 보여주고 그 아래에 이 도시/날씨에 맞는 추천 관광지 카드를 `RecommendedAttraction.vue`(실습 3 컴포넌트)를 그대로 재사용해서 붙였습니다.
 - 존재하지 않는 `cityId`로 접근한 경우(`cityInfo`가 `null`)에는 "해당 도시 정보를 찾을 수 없어요" 안내와 함께 대시보드로 돌아가는 버튼만 보여줍니다.
-- 뒤로가기 버튼은 텍스트 화살표(`←`) 대신 재사용 가능하도록 분리한 `IconArrowLeft.vue`(SVG 컴포넌트)를 불러다 씁니다.
+- 뒤로가기 버튼은 텍스트 화살표(`←`) 대신 재사용 가능하도록 분리한 `IconArrowLeft.vue`(SVG 컴포넌트)를 불러다 쓰도록 했습니다.
 
 ### 5. `WeatherAboutView.vue` — 서비스 소개, `/about` 경로
 
-프로젝트에 대한 간단한 소개 문구와 기능 목록을 정적으로 작성하고, 하단에 "대시보드 홈으로 이동" 버튼을 배치해 `router.push('/')`로 메인 화면으로 돌아갈 수 있게 했습니다.
+프로젝트에 대한 간단한 소개 문구와 기능 목록을 정적으로 작성하고 하단에 대시보드 홈으로 이동하는 버튼을 배치해 `router.push('/')`로 메인 화면으로 돌아갈 수 있게 했습니다.
 
 ### 6. 본인 추가 View — `WeatherAttractionGalleryView.vue`, `/attractions` 경로
 
@@ -514,11 +505,11 @@ export const attractionGallery = Object.entries(attractionMap).flatMap(([cityId,
 })
 ```
 
-카드 하나는 관광지 이름이 크게 나오고, 그 아래 "{지역} · {날씨}일 때 추천" 캡션과 tip 문구가 작게 붙는 순서로 배치했습니다. 실습 3에서 만든 `SearchBar.vue`를 재사용해서 관광지 이름/지역 이름으로 검색·필터링도 가능합니다.
+카드 하나는 관광지 이름이 크게 나오고, 그 아래 "{지역} · {날씨}일 때 추천" 캡션과 tip 문구가 작게 붙는 순서로 배치했습니다. 실습 3에서 만든 `SearchBar.vue`를 재사용해서 관광지 이름/지역 이름으로 검색(필터링)도 가능합니다.
 
 ### 7. 여러 View가 공유하는 데이터/유틸/컴포넌트 분리
 
-View가 4개(+에러 페이지 1개)로 늘어나면서, Home에만 있던 데이터와 헬퍼 함수를 각 View가 각자 중복 정의하면 데이터가 어긋날 위험이 있어서 아래처럼 별도 모듈로 뽑아냈습니다.
+View가 4개(+에러 페이지 1개)로 늘어나면서 Home에만 있던 데이터와 헬퍼 함수를 각 View가 각자 중복 정의하면 데이터가 어긋날 위험이 있어서 아래처럼 별도 모듈로 뽑아냈습니다.
 
 | 파일                                     | 역할                                                                                                                                                                                                        |
 | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -636,7 +627,7 @@ createApp(App).use(createPinia()).use(router).mount('#app')
 
 ### 2. `UnitToggler.vue` — 대시보드 상단 단위 변경 UI
 
-처음엔 "날씨단위: °C [단위변경]" 형태의 버튼 하나로 만들었다가 `°C`/`°F` 두 옵션을 나란히 두고 선택된 쪽만 진하게 강조하는 세그먼트 형태로 다시 디자인했습니다.
+`°C`/`°F` 두 옵션을 나란히 두고 선택된 쪽만 진하게 강조하는 세그먼트 형태로 다시 디자인했습니다.
 
 ```html
 <div class="unit-toggler">
@@ -692,7 +683,7 @@ const displayTemp = computed(() => {
 
 ### 5. 본인만의 추가 Store — `stores/recentlyViewedStore.js` (최근 본 도시)
 
-`configStore`에 항목을 추가하는 대신 별도의 스토어를 새로 만들었습니다. Detail 페이지를 방문할 때마다 도시를 기록해두고 Home 화면에 "최근 본 도시" 카드로 보여주는 기능입니다.
+`configStore`에 항목을 추가하는 대신 별도의 스토어를 새로 만들었습니다. Detail 페이지를 방문할 때마다 도시를 기록해두고 Home 화면에 최근 본 도시 카드로 보여주는 기능입니다.
 
 ```js
 import { defineStore } from 'pinia'
@@ -790,7 +781,8 @@ useRecentlyViewedStore (cityIds, recentCities, addCity, clearAll)
 
 ## 실습 6: Weather Axios (외부 API 연동)
 
-지금까지 화면에 있던 온도/습도/풍속 등이 전부 직접 만든 mock 데이터였는데, 실제 외부 API(OpenWeatherMap, Unsplash) 데이터로 교체하고 기능을 확장하는 회차
+지금까지 화면에 있던 온도/습도/풍속 등이 전부 직접 만든 mock 데이터였는데 실제 외부 API(OpenWeatherMap, Unsplash) 데이터로 교체하고 기능을 확장하는 회차
+
 세 요구사항 모두 한 번만 불러와서 Pinia 스토어(전역)에 캐싱해두고 여러 화면에서 재사용하는 동일한 패턴으로 구현
 
 ### 1. OpenWeatherMap 실제 날씨 데이터 적용
@@ -810,9 +802,9 @@ export async function fetchCurrentWeatherByCoords(lat, lon) {
 ```
 
 - 실제 10개 도시 중 수원·강릉처럼 이름 매칭이 부정확할 수 있는 도시가 있어서 좌표(lat/lon) 기반 조회로 바꿨습니다. `mock/WeatherData.js`의 `weatherList`(온도·습도 등 mock 값)를 걷어내고 대신 API 호출에 필요한 `cityDefinitions`(id/name/lat/lon)만 남겼습니다.
-- API Key는 `.env`의 `VITE_OPENWEATHER_API_KEY`로 관리하고(`import.meta.env`로 읽음), `.env`는 `.gitignore`에 추가했습니다.
+- API Key는 `.env`의 `VITE_OPENWEATHER_API_KEY`로 관리하고(`import.meta.env`로 읽음) `.env`는 `.gitignore`에 추가했습니다.
 
-#### `stores/weatherStore.js` — "한 번만 호출해서 전역에 저장"
+#### `stores/weatherStore.js` — 한 번만 호출해서 전역에 저장
 
 ```js
 export const useWeatherStore = defineStore('weather', () => {
@@ -848,7 +840,7 @@ export const useWeatherStore = defineStore('weather', () => {
 
 - `loaded` 가드 + `inFlightRequest`(진행 중인 요청 자체를 공유) 두 겹으로 Home에서 부르든 Detail에서 바로 부르든 실제 네트워크 요청은 앱 켜진 동안 딱 1번만 나가도록 했습니다.
 - `mapConditionToStatus()`: OpenWeatherMap의 날씨 코드(`weather[0].main` — `Clear`/`Clouds`/`Rain`/`Drizzle`/`Thunderstorm`/`Snow`/`Mist`/`Haze`... 등)를 이 앱이 쓰는 4종(맑음/흐림/비/눈)으로 매핑. `Clear`→맑음, `Snow`→눈, `Rain`·`Drizzle`·`Thunderstorm`→비, 그 외(`Clouds`, `Mist`, `Haze` 등)는 전부 흐림으로 취급합니다.
-- `WeatherHomeView.vue`/`WeatherDetailView.vue`에는 데이터가 없을 때(로딩 중)와 로딩이 끝났는데도 없을 때(존재하지 않는 cityId)를 `v-if`/`v-else-if`로 구분해서 로딩 중에 "찾을 수 없음" 문구가 잘못 겹쳐 뜨는 걸 방지했습니다.
+- `WeatherHomeView.vue`/`WeatherDetailView.vue`에는 데이터가 없을 때(로딩 중)와 로딩이 끝났는데도 없을 때(존재하지 않는 cityId)를 `v-if`/`v-else-if`로 구분해서 로딩 중에 찾을 수 없음 문구가 잘못 겹쳐 뜨는 걸 방지했습니다.
 
 ### 2. OpenWeatherMap의 다른 API 추가 (5 Day/3 Hour Forecast)
 
@@ -880,7 +872,7 @@ async function fetchForecast(cityId) {
 
 ### 3. 기타 외부 API 추가 (Unsplash)
 
-관광지 이미지가 지금까지 `picsum.photos` 랜덤 placeholder였던 걸 Unsplash Search Photos API로 관광지 이름 기반 실제 사진으로 교체했습니다. (Demo 등급은 시간당 50회 제한이라 어디에 몇 번 쓰이는지가 설계의 핵심이었습니다)
+관광지 이미지가 지금까지 `picsum.photos` 랜덤 placeholder였던 걸 Unsplash Search Photos API로 관광지 이름 기반 실제 사진으로 교체했습니다. (Demo 등급은 시간당 50회 제한이라 어디에 몇 번 쓰이는지가 설계의 핵심)
 
 #### `api/unsplashApi.js` + `stores/attractionImageStore.js`
 
@@ -942,13 +934,13 @@ observer = new IntersectionObserver(
 
 40개를 한 화면에 다 그리는 갤러리는 마운트 즉시 전부 검색하면 그 자체로 시간당 한도를 다 써버려서 많이 나열되는 곳만 지연 로딩으로 구분했습니다. `attractionImageStore`는 Home과 갤러리가 같은 캐시를 공유하므로 같은 관광지가 두 페이지에 걸쳐 나와도 중복 검색되지 않습니다.
 
-#### 한계점: 이미지 중복 문제
-
-도시명을 붙여 검색 정확도를 개선했지만 일부 관광지는 여전히 서로 다른 검색어인데도 동일한 사진이 반환되었습니다.
-
-- **원인**: Unsplash에 매칭되는 사진이 거의 없는 마이너한 장소는 검색 결과가 빈약할 때 관련도 낮은 인기 사진을 1위로 반환합니다. `per_page: 1`로 최상위 1장만 가져오다 보니 서로 다른 검색어가 같은 사진으로 수렴합니다.
-- **1차 개선**: 검색어를 `${관광지명} ${도시명}`으로 바꿔 문맥을 좁혔고 유명 관광지는 정확도가 눈에 띄게 좋아졌습니다.
-- **남은 한계**: 도시명을 붙여도 애초에 사진이 거의 없는 로컬 장소는 여전히 동일한 사진으로 수렴합니다. 검색어 튜닝만으로는 한계가 있는 Unsplash가 정확한 장소 매칭이 아니라 키워드 기반 스톡 사진 검색이라는 근본적인 특성 때문으로 판단했습니다.
+> #### 한계점: 이미지 중복 문제
+>
+> 도시명을 붙여 검색 정확도를 개선했지만 일부 관광지는 여전히 서로 다른 검색어인데도 동일한 사진이 반환되었습니다.
+>
+> - **원인**: Unsplash에 매칭되는 사진이 거의 없는 마이너한 장소는 검색 결과가 빈약할 때 관련도 낮은 인기 사진을 1위로 반환합니다. `per_page: 1`로 최상위 1장만 가져오다 보니 서로 다른 검색어가 같은 사진으로 수렴합니다.
+> - **1차 개선**: 검색어를 `${관광지명} ${도시명}`으로 바꿔 문맥을 좁혔고 유명 관광지는 정확도가 눈에 띄게 좋아졌습니다.
+> - **남은 한계**: 도시명을 붙여도 애초에 사진이 거의 없는 로컬 장소는 여전히 동일한 사진으로 수렴합니다. 검색어 튜닝만으로는 한계가 있는 Unsplash가 정확한 장소 매칭이 아니라 키워드 기반 스톡 사진 검색이라는 근본적인 특성 때문으로 판단했습니다.
 
 ### 4. 최종 파일 구조 (실습 6 추가분)
 
@@ -990,12 +982,13 @@ useAttractionImageStore
 
 ## 실습 7: Weather UI Library (외부 UI 라이브러리 적용)
 
-외부 UI 라이브러리를 하나 선정해서 지금까지 자유롭게 적용해보는 마지막 회차.
+외부 UI 라이브러리를 하나 선정해서 지금까지 자유롭게 적용해보는 마지막 회차
+
 PrimeVue를 선택했습니다.
 
 ### 1. 라이브러리 선정 기준과 이유
 
-이 앱은 이미 실습 3~6을 거치며 커스텀 디자인 시스템(글래스모피즘 nav bar, CSS 변수 기반 색상 체계, 손으로 만든 카드·패널 컴포넌트들)이 상당히 완성돼 있었습니다. 그래서 Vuetify처럼 자기 색깔이 강한 Material Design 프레임워크를 통째로 얹으면 지금까지의 디자인과 충돌할 위험이 컸습니다.
+이 앱은 이미 실습 3~6을 거치며 커스텀 디자인 시스템(글래스모피즘 nav bar, CSS 변수 기반 색상 체계, 손으로 만든 카드·패널 컴포넌트들)이 완성돼 있었습니다. 그래서 Vuetify처럼 자기 색깔이 강한 Material Design 프레임워크를 통째로 얹으면 지금까지의 디자인과 충돌할 위험이 컸습니다.
 
 - **테마 커스터마이징이 쉬운가**: PrimeVue v4는 CSS 변수 기반 디자인 토큰 체계라 필요하면 기존 색상(`--accent` 등)에 맞춰 프리셋을 오버라이드할 수 있음
 - **부분 적용이 가능한가**: 컴포넌트 단위로 개별 import해서 필요한 것만 쓸 수 있음 (전체 앱을 갈아엎을 필요 없음)
@@ -1022,11 +1015,12 @@ app.use(PrimeVue, {
 })
 ```
 
-> **버전 고정 노트**: `npm install primevue`를 버전 지정 없이 설치하면 최신 버전이 깔리는데 PrimeTek이 최근 "PrimeUI"라는 새 라이선스 체계를 도입하면서 최신 버전(5+)에는 무료 Community 라이선스 키 등록이 필요해졌습니다. 키가 없으면 화면에 "Invalid PrimeUI License" 배지가 뜹니다. PrimeVue 4 및 이전 버전은 계속 MIT 라이선스로 완전 무료라, 과제 범위에서는 라이선스 신청 없이 `primevue@^4`로 버전을 고정해서 이 문제를 피했습니다.
+> **버전 고정 노트**: `npm install primevue`를 버전 지정 없이 설치하면 최신 버전이 깔리는데 PrimeTek이 최근 PrimeUI라는 새 라이선스 체계를 도입하면서 최신 버전(5+)에는 무료 Community 라이선스 키 등록이 필요해졌습니다. 키가 없으면 화면에 "Invalid PrimeUI License" 배지가 뜹니다. PrimeVue 4 및 이전 버전은 계속 MIT 라이선스로 완전 무료라 과제 범위에서는 라이선스 신청 없이 `primevue@^4`로 버전을 고정해서 이 문제를 피했습니다.
 
 ### 3. 적용한 컴포넌트: `Skeleton`
 
-지금까지 로딩 중일 때 전부 "실시간 날씨 데이터를 불러오는 중..." 같은 텍스트 한 줄로만 표시하던 걸, 로딩이 끝나면 실제로 나타날 콘텐츠와 똑같은 모양의 스켈레톤으로 교체했습니다. 스켈레톤은 실제 콘텐츠 모양을 미리 보여줘서 로딩 끝나고 화면이 전환될 때 레이아웃이 튀지 않고 체감 로딩 속도도 줄여주는 효과가 있습니다.
+지금까지 로딩 중일 때 전부 "실시간 날씨 데이터를 불러오는 중..." 같은 텍스트 한 줄로만 표시하던 것을 로딩이 끝나면 실제로 나타날 콘텐츠와 똑같은 모양의 스켈레톤으로 교체했습니다.
+스켈레톤은 실제 콘텐츠 모양을 미리 보여줘서 로딩 끝나고 화면이 전환될 때 레이아웃이 튀지 않고 체감 로딩 속도도 줄여주는 효과가 있습니다.
 
 | 화면/컴포넌트           | 기존         | 변경                                                             |
 | ----------------------- | ------------ | ---------------------------------------------------------------- |
