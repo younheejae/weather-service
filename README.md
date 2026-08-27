@@ -977,3 +977,88 @@ useAttractionImageStore
 │   ├── RecommendedAttraction.vue    (즉시 로드, 1개)
 │   └── LazyAttractionThumb.vue      (지연 로드, 최대 40개) → WeatherAttractionGalleryView.vue
 ```
+
+---
+
+## 실습 7: Weather UI Library (외부 UI 라이브러리 적용)
+
+외부 UI 라이브러리를 하나 선정해서 지금까지 자유롭게 적용해보는 마지막 회차.
+PrimeVue를 선택했습니다.
+
+### 1. 라이브러리 선정 기준과 이유
+
+이 앱은 이미 실습 3~6을 거치며 커스텀 디자인 시스템(글래스모피즘 nav bar, CSS 변수 기반 색상 체계, 손으로 만든 카드·패널 컴포넌트들)이 상당히 완성돼 있었습니다. 그래서 Vuetify처럼 자기 색깔이 강한 Material Design 프레임워크를 통째로 얹으면 지금까지의 디자인과 충돌할 위험이 컸습니다.
+
+- **테마 커스터마이징이 쉬운가**: PrimeVue v4는 CSS 변수 기반 디자인 토큰 체계라 필요하면 기존 색상(`--accent` 등)에 맞춰 프리셋을 오버라이드할 수 있음
+- **부분 적용이 가능한가**: 컴포넌트 단위로 개별 import해서 필요한 것만 쓸 수 있음 (전체 앱을 갈아엎을 필요 없음)
+- **지금 앱에 실제로 빠진 UI 패턴인가**: 로딩 상태를 지금까지 전부 "불러오는 중..." 같은 텍스트로만 표시하고 있었는데 이 부분이 가장 아쉬웠던 지점이라 여기에 붙이기로 결정
+
+### 2. 설치 및 등록
+
+```bash
+npm install primevue@^4 @primevue/themes@^4
+```
+
+```js
+// main.js
+import PrimeVue from 'primevue/config'
+import Aura from '@primevue/themes/aura'
+
+app.use(PrimeVue, {
+  theme: {
+    preset: Aura,
+    options: {
+      darkModeSelector: false, // 이 앱은 다크모드를 안 쓰므로 비활성화
+    },
+  },
+})
+```
+
+> **버전 고정 노트**: `npm install primevue`를 버전 지정 없이 설치하면 최신 버전이 깔리는데 PrimeTek이 최근 "PrimeUI"라는 새 라이선스 체계를 도입하면서 최신 버전(5+)에는 무료 Community 라이선스 키 등록이 필요해졌습니다. 키가 없으면 화면에 "Invalid PrimeUI License" 배지가 뜹니다. PrimeVue 4 및 이전 버전은 계속 MIT 라이선스로 완전 무료라, 과제 범위에서는 라이선스 신청 없이 `primevue@^4`로 버전을 고정해서 이 문제를 피했습니다.
+
+### 3. 적용한 컴포넌트: `Skeleton`
+
+지금까지 로딩 중일 때 전부 "실시간 날씨 데이터를 불러오는 중..." 같은 텍스트 한 줄로만 표시하던 걸, 로딩이 끝나면 실제로 나타날 콘텐츠와 똑같은 모양의 스켈레톤으로 교체했습니다. 스켈레톤은 실제 콘텐츠 모양을 미리 보여줘서 로딩 끝나고 화면이 전환될 때 레이아웃이 튀지 않고 체감 로딩 속도도 줄여주는 효과가 있습니다.
+
+| 화면/컴포넌트           | 기존         | 변경                                                             |
+| ----------------------- | ------------ | ---------------------------------------------------------------- |
+| `WeatherHomeView.vue`   | 텍스트 한 줄 | 카드 4개 모양(썸네일 + 제목줄 + 메타줄 + 배지)의 스켈레톤 그리드 |
+| `WeatherDetailView.vue` | 텍스트 한 줄 | 실제 `.panel`과 동일한 모양(제목줄 + 5개 행)의 스켈레톤          |
+| `ForecastPanel.vue`     | 텍스트 한 줄 | 예보 카드 5칸(날짜/아이콘/온도/상태) 모양의 스켈레톤             |
+
+```html
+<!-- WeatherHomeView.vue -->
+<div class="card-grid" v-if="weatherStore.isLoading">
+  <div class="card-skeleton" v-for="n in 4" :key="n">
+    <Skeleton height="150px" border-radius="16px 16px 0 0" />
+    <div class="card-skeleton-body">
+      <Skeleton width="55%" height="1.1rem" style="margin-bottom: 10px" />
+      <Skeleton width="85%" height="0.85rem" style="margin-bottom: 14px" />
+      <Skeleton width="45%" height="1.4rem" border-radius="999px" />
+    </div>
+  </div>
+</div>
+```
+
+```html
+<!-- ForecastPanel.vue -->
+<div class="forecast-row" v-if="isLoading">
+  <div class="forecast-item" v-for="n in 5" :key="n">
+    <Skeleton width="70%" height="12px" style="margin: 0 auto 8px" />
+    <Skeleton shape="circle" size="22px" style="margin: 0 auto 8px" />
+    <Skeleton width="55%" height="14px" style="margin: 0 auto 4px" />
+    <Skeleton width="65%" height="10px" style="margin: 0 auto" />
+  </div>
+</div>
+```
+
+에러 상태(`weatherStore.error`, `forecastError`)는 스켈레톤이 아니라 그대로 텍스트로 뒀습니다. 스켈레톤은 곧 콘텐츠가 로드될 거라는 기대를 주는 UI라 실패해서 더 이상 기다릴 게 없는 에러 상황에는 맞지 않기 때문입니다.
+
+### 4. 최종 파일 구조 (실습 7 추가분)
+
+```
+src/
+└── main.js   # PrimeVue 플러그인 등록 (Aura 프리셋, 다크모드 비활성화) — 신규 파일은 없고 기존 3개 View/컴포넌트를 수정
+```
+
+`WeatherHomeView.vue`, `WeatherDetailView.vue`, `ForecastPanel.vue` 세 파일에 `import Skeleton from 'primevue/skeleton'` 추가 + 로딩 분기 마크업만 교체했고 새로 만든 파일은 없습니다.

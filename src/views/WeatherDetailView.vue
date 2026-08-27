@@ -9,6 +9,7 @@ import { useConfigStore } from '@/stores/configStore'
 import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore'
 import { useWeatherStore } from '@/stores/weatherStore'
 import ForecastPanel from '@/components/exercise/ForecastPanel.vue'
+import Skeleton from 'primevue/skeleton'
 
 // Router 동적 경로 매칭(:cityId)을 기반으로 Mount 시점에 Mock Data에서 도시 객체 선택
 const route = useRoute()
@@ -78,8 +79,16 @@ function goBackToDashboard() {
 <template>
   <div class="page-bg">
     <div class="content-area">
-      <div class="loading-box" v-if="weatherStore.isLoading && !cityInfo">
-        <p class="loading-text">실시간 날씨 데이터를 불러오는 중...</p>
+      <!-- 실시간 데이터를 아직 불러오는 중일 때 PrimeVue Skeleton 실제 상세 정보
+           패널과 같은 모양(.panel > 제목 + 5줄)으로 뼈대만 먼저 보여줌 -->
+      <div class="panel" v-if="weatherStore.isLoading && !cityInfo">
+        <Skeleton width="65%" height="20px" style="margin-bottom: 24px" />
+        <dl class="detail-grid">
+          <div class="detail-row" v-for="n in 5" :key="n">
+            <Skeleton width="30%" height="14px" />
+            <Skeleton width="22%" height="14px" />
+          </div>
+        </dl>
       </div>
 
       <!-- 존재하지 않는 cityId로 접근한 경우 -->

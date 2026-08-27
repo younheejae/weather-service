@@ -12,6 +12,7 @@ import HeroBand from '@/components/exercise/HeroBand.vue'
 import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore'
 import RecentlyViewedChips from '@/components/exercise/RecentlyViewedChips.vue'
 import { useWeatherStore } from '@/stores/weatherStore'
+import Skeleton from 'primevue/skeleton'
 
 const router = useRouter()
 const recentlyViewedStore = useRecentlyViewedStore()
@@ -146,12 +147,23 @@ function attractionOf(city) {
           @clear-filter="clearStatusFilter"
         />
 
-        <p v-if="weatherStore.isLoading" class="status-text">실시간 날씨 데이터를 불러오는 중...</p>
-        <p v-else-if="weatherStore.error" class="status-text status-text--error">
+        <!-- 에러는 텍스트로, 로딩 중에는 PrimeVue 스켈레톤 카드로 표시 -->
+        <p v-if="weatherStore.error" class="status-text status-text--error">
           {{ weatherStore.error }}
         </p>
 
-        <div class="card-grid">
+        <div class="card-grid" v-if="weatherStore.isLoading">
+          <div class="card-skeleton" v-for="n in 4" :key="n">
+            <Skeleton height="150px" border-radius="16px 16px 0 0" />
+            <div class="card-skeleton-body">
+              <Skeleton width="55%" height="1.1rem" style="margin-bottom: 10px" />
+              <Skeleton width="85%" height="0.85rem" style="margin-bottom: 14px" />
+              <Skeleton width="45%" height="1.4rem" border-radius="999px" />
+            </div>
+          </div>
+        </div>
+
+        <div class="card-grid" v-else>
           <WeatherCard
             v-for="city in filteredWeatherList"
             :key="city.id"
@@ -163,7 +175,9 @@ function attractionOf(city) {
           />
         </div>
 
-        <p class="empty" v-if="filteredWeatherList.length === 0">조건에 맞는 도시가 없습니다.</p>
+        <p class="empty" v-if="!weatherStore.isLoading && filteredWeatherList.length === 0">
+          조건에 맞는 도시가 없습니다.
+        </p>
       </BaseDashboardCard>
     </div>
   </div>

@@ -2,6 +2,7 @@
 import { computed, watch } from 'vue'
 import { useWeatherStore } from '@/stores/weatherStore'
 import { useConfigStore } from '@/stores/configStore'
+import Skeleton from 'primevue/skeleton'
 
 // props: cityId 하나만 받음 weatherStore.fetchForecast()가 내부적으로
 // 캐시(forecastByCityId)를 갖고 있어서 같은 cityId로 다시 마운트돼도 재요청하지 않음
@@ -47,7 +48,16 @@ function displayTemp(tempCelsius) {
   <div class="panel">
     <h2>앞으로 5일간 예보</h2>
 
-    <p v-if="isLoading" class="forecast-status">예보를 불러오는 중...</p>
+    <!-- 로딩 중엔 PrimeVue Skeleton으로 5칸 뼈대만, 완료되면 실제 예보로 교체 -->
+    <div class="forecast-row" v-if="isLoading">
+      <div class="forecast-item" v-for="n in 5" :key="n">
+        <Skeleton width="70%" height="12px" style="margin: 0 auto 8px" />
+        <Skeleton shape="circle" size="22px" style="margin: 0 auto 8px" />
+        <Skeleton width="55%" height="14px" style="margin: 0 auto 4px" />
+        <Skeleton width="65%" height="10px" style="margin: 0 auto" />
+      </div>
+    </div>
+
     <p v-else-if="weatherStore.forecastError" class="forecast-status forecast-status--error">
       {{ weatherStore.forecastError }}
     </p>

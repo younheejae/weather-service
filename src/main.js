@@ -2,5 +2,20 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import PrimeVue from 'primevue/config'
+import Aura from '@primevue/themes/aura'
 
-createApp(App).use(createPinia()).use(router).mount('#app')
+const app = createApp(App)
+
+app.use(createPinia())
+app.use(router)
+app.use(PrimeVue, {
+  theme: {
+    preset: Aura,
+    options: {
+      darkModeSelector: false, // 이 앱은 다크모드를 안 쓰므로 비활성화
+    },
+  },
+})
+
+app.mount('#app')
