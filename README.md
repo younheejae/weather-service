@@ -282,13 +282,108 @@ function handleImageError(event, seedText) {
 
 ---
 
-## 파일 구조
+## 실습 3: Weather Components (컴포넌트 분리)
 
-이거는 나중에 최종 구조를 보여주기.
+기능 변경 없이 실습 1 + 실습 2 결과물(`WeatherMockup.vue` 단일 파일)을 여러 개의 Vue 컴포넌트로 분리하는 회차
+
+### 1. 요구사항으로 지정된 4개 컴포넌트
+
+#### `WeatherParent.vue` — 최상위(부모) 컴포넌트
+
+- 모든 반응형 상태와 `computed`, `watch`/`watchEffect` 를 이 컴포넌트에 두었습니다.
+- 자식 컴포넌트가 emit한 이벤트를 받아 상태를 갱신하는 핸들러(`updateSearchQuery`, `clearSearch`, `selectCity`, `showDetail`, `toggleStatusFilter`, `clearStatusFilter`)를 정의했습니다.
+- 자식에게 필요한 파생 데이터는 부모가 미리 계산해서 props로 내려줍니다. 예를 들어 카드 하나하나에 필요한 관광지 정보는 `attractionOf(city)` 함수로 계산해 `WeatherCard`에 `attraction` prop으로 전달합니다. → **단방향 데이터 흐름**(부모 → 자식은 props, 자식 → 부모는 emit) 유지.
+
+```html
+<WeatherCard
+  v-for="city in filteredWeatherList"
+  :key="city.id"
+  :city="city"
+  :selected="!!selectedCityInfo && selectedCityInfo.id === city.id"
+  :attraction="attractionOf(city)"
+  @select-card="selectCity"
+  @click-detail="showDetail"
+/>
+```
+
+#### `BaseDashboardCard.vue` — 검색박스·리스트박스 공통 디자인
+
+- 검색 패널과 목록 패널이 똑같이 쓰는 흰색 카드형 패널 디자인(`.panel`, 제목 영역 `h2`)만 담당합니다.
+- 내용은 갖고 있지 않고, `<slot name="header">`(제목 영역)와 기본 `<slot />`(본문 영역) 두 개로 부모가 무엇을 넣을지 위임받습니다.
+- `WeatherParent.vue`에서 검색 패널, 목록 패널을 두 번 재사용됩니다.
+
+```html
+<BaseDashboardCard>
+  <template #header>도시 검색</template>
+  <SearchBar ... />
+</BaseDashboardCard>
+```
+
+#### `SearchBar.vue` — 검색 입력창
+
+- **props**: `searchQuery` (부모의 검색어 상태를 그대로 전달받아 input에 표시)
+- **emits**: `update-query`(입력할 때마다 새 값을 부모에 전달), `reset`(초기화 버튼 클릭)
+- 실습 1에서 확인한 "IME 조합 중 글자가 어긋나는 문제"를 그대로 방지하기 위해, `v-model` 대신 `@input`에서 `event.target.value`를 그대로 emit하는 방식을 유지했습니다.
+
+```js
+function onInput(event) {
+  emit('update-query', event.target.value)
+}
+```
+
+#### `WeatherCard.vue` — 날씨 카드 한 장
+
+- **props**: `city`(도시 객체 전체), `selected`(현재 선택된 카드인지 여부), `attraction`(이 도시의 현재 status에 맞는 추천 관광지)
+- **emits**: `select-card`(카드 클릭 시 이 도시를 선택했음을 부모에 전달), `click-detail`(상세보기 버튼 클릭 시 부모에 알림)
+
+```html
+<div class="card" @click="emit('select-card', city)">
+  ...
+  <button class="detail-btn" @click.stop="emit('click-detail', city)">상세보기</button>
+</div>
+```
+
+### 2. 본인이 추가로 분리한 컴포넌트
+
+| 컴포넌트                    | 담당 UI                                                                                 | props                                                | emits             |
+| --------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------- |
+| `WeatherStatusFilter.vue`   | 지역별 날씨 현황 제목 옆 통계 칩(☀️/🌥️/🌧️/❄️) — 클릭 가능한 필터 버튼                   | `statusOrder`, `weatherStatusCounts`, `statusFilter` | `toggle-filter`   |
+| `WeatherStatusHints.vue`    | "N곳은 비·눈이 와서 실내 관광지 추천" 안내 + "OO인 도시만 보고 있어요 · 전체 보기" 안내 | `indoorRecommendedCount`, `statusFilter`             | `clear-filter`    |
+| `RecommendedAttraction.vue` | 선택 전 안내 문구(`status-bar--muted`) / 선택 후 추천 관광지 히어로 카드                | `selectedCityInfo`, `recommendedAttraction`          | (없음, 표시 전용) |
+
+- `WeatherStatusFilter`는 `BaseDashboardCard`의 `#header` 슬롯 안(제목 옆)에 들어가고 `WeatherStatusHints`는 그 아래 본문 영역에 들어가서 원본의 "제목 옆 칩 + 칩 아래 안내 문구"라는 배치를 그대로 재현했습니다.
+- `RecommendedAttraction`은 `selectedCityInfo`가 없으면 안내 문구를, 있으면 히어로 카드를 보여주는 로직을 그대로 캡슐화했습니다.
+
+### 3. CSS 분리 (`<style scoped>`)
+
+- 원본 `WeatherMockup.vue`의 CSS를 어느 컴포넌트의 마크업에서 쓰이는가 기준으로 그대로 잘라서 각 컴포넌트의 `<style scoped>`로 옮겼습니다. (예: `.search-row`, `.search-field`, `input[type='text']`, `.reset-btn`, `.search-hint` → `SearchBar.vue` / `.card`, `.card-thumb`, `.badge` 등 → `WeatherCard.vue`)
+- 페이지 전역 레이아웃(`.page-bg`, `.hero-band`, `.content-area`)과 CSS 변수(`--ink`, `--accent`, `--panel-bg` 등)는 `WeatherParent.vue`에 남겼습니다.
+  - Vue의 `scoped` 스타일은 "이 셀렉터가 이 컴포넌트 안에서만 매칭된다"는 제약일 뿐 CSS 커스텀 프로퍼티(변수)는 실제 DOM 트리를 따라 정상적으로 상속됩니다. 따라서 `WeatherParent.vue`의 `.page-bg`에서 정의한 `var(--ink)` 등은 실제 렌더링 시 자식 컴포넌트(`SearchBar`, `WeatherCard` 등) 안에서도 그대로 사용할 수 있었습니다.
+- `.card-grid`, `.empty`(검색 결과 없음 안내)는 리스트 자체를 렌더링하는 마크업이 `WeatherParent.vue`의 템플릿에 남아 있어서 스타일도 그쪽에 함께 두었습니다.
+
+### 4. 최종 파일 구조
 
 ```
 src/
 └── components/
-    └── exam/
-        └── WeatherMockup.vue   # 날씨 Mockup 컴포넌트 (실습 1 + 실습 2 요구사항 통합)
+    ├── WeatherParent.vue           # 상태·computed·watch·이벤트 핸들러 보유 (최상위)
+    ├── BaseDashboardCard.vue       # 검색/목록 패널 공통 디자인 (slot 기반)
+    ├── SearchBar.vue               # 도시 검색 입력창 (props/emits)
+    ├── WeatherCard.vue             # 날씨 카드 1장 (props/emits)
+    ├── WeatherStatusFilter.vue     # [본인 추가] 통계 칩 필터 버튼
+    ├── WeatherStatusHints.vue      # [본인 추가] 실내 추천/필터 안내 문구
+    └── RecommendedAttraction.vue   # [본인 추가] 선택 안내 + 추천 관광지 히어로 카드
+```
+
+### 5. 컴포넌트 트리 (부모 → 자식 관계)
+
+```
+WeatherParent
+├── BaseDashboardCard (검색 패널)
+│   └── SearchBar
+├── RecommendedAttraction
+└── BaseDashboardCard (목록 패널)
+    ├── WeatherStatusFilter   (#header 슬롯)
+    ├── WeatherStatusHints
+    └── WeatherCard × N        (v-for)
 ```

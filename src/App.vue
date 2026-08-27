@@ -1,11 +1,12 @@
 <script setup>
 // import { RouterLink, RouterView } from 'vue-router'
 // import HelloWorld from './components/HelloWorld.vue'
-import WeatherComponent from './components/WeatherComponent.vue'
+import WeatherParent from './components/WeatherParent.vue'
 </script>
 
 <template>
-  <WeatherComponent />
+  <WeatherParent />
+  <!-- <WeatherComponent /> -->
   <!-- <header>
     <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
 
