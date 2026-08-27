@@ -1,13 +1,14 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { attractionGallery } from '@/mock/Weatherdata'
-import { attractionImageSrc, handleImageError, statusIcon } from '@/utils/Weatherhelpers'
+import { attractionGallery } from '@/mock/WeatherData'
+import { statusIcon } from '@/utils/Weatherhelpers'
 import BaseDashboardCard from '@/components/exercise/BaseDashboardCard.vue'
 import SearchBar from '@/components/exercise/SearchBar.vue'
 import HeroBand from '@/components/exercise/HeroBand.vue'
+import Lazyattractionthumb from '@/components/exercise/Lazyattractionthumb.vue'
 
 // attractionMap(도시 × status)을 평탄화한 40개 관광지를 관광지가 주인공인 카드 그리드로 보여줌
-// 지역/날씨는 관광지 이름 아래 부제(캡션)로만 붙는다
+// 지역/날씨는 관광지 이름 아래 부제(캡션)로만 붙음
 const searchQuery = ref('')
 
 const filteredGallery = computed(() => {
@@ -46,11 +47,13 @@ function updateSearchQuery(value) {
 
       <div class="gallery-grid">
         <div v-for="item in filteredGallery" :key="item.id" class="gallery-card">
-          <img
+          <!-- 실제로 스크롤돼서 화면에 보일 때만 Unsplash를 검색하는 지연 로딩 썸네일
+               보이기 전까지는 기존 로컬/picsum 이미지가 그대로 보임 -->
+          <Lazyattractionthumb
             class="gallery-thumb"
-            :src="attractionImageSrc(item.image)"
+            :name="item.name"
+            :image-file-name="item.image"
             :alt="item.name"
-            @error="handleImageError($event, item.image)"
           />
           <div class="gallery-body">
             <p class="gallery-name">{{ item.name }}</p>
@@ -93,57 +96,17 @@ function updateSearchQuery(value) {
   letter-spacing: -0.01em;
 }
 
-.hero-band {
-  width: 100%;
-  background: radial-gradient(circle at 15% 0%, #1c2e66 0%, #101a3d 45%, #0b1330 100%);
-}
-.hero-inner {
-  width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 108px 16px 40px;
-  box-sizing: border-box;
-}
-@media (min-width: 900px) {
-  .hero-inner {
-    max-width: 880px;
-    padding: 124px 32px 44px;
-  }
-}
-.eyebrow {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #cfe0ff;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 4px 10px;
-  border-radius: 999px;
-  margin: 0 0 10px;
-}
-.hero-inner h1 {
-  font-size: 25px;
-  font-weight: 800;
-  margin: 0 0 6px;
-  color: #ffffff;
-}
-.hero-inner .sub {
-  font-size: 14px;
-  color: #b7c3e8;
-  margin: 0;
-}
-
 .content-area {
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
-  padding: 48px 16px 60px;
+  padding: 24px 16px 60px;
   box-sizing: border-box;
 }
 @media (min-width: 900px) {
   .content-area {
     max-width: 960px;
-    padding: 48px 32px 90px;
+    padding: 32px 32px 90px;
   }
 }
 
@@ -171,26 +134,26 @@ function updateSearchQuery(value) {
 }
 .gallery-thumb {
   width: 100%;
-  height: 180px;
-  object-fit: cover;
+  height: 150px;
+  display: block;
   background: var(--panel-bg);
 }
 .gallery-body {
   padding: 14px 16px 16px;
 }
 .gallery-name {
-  font-size: 17px;
+  font-size: 15.5px;
   font-weight: 700;
-  margin: 0 0 12px;
+  margin: 0 0 4px;
 }
 .gallery-caption {
-  font-size: 14px;
+  font-size: 12.5px;
   color: var(--accent);
   font-weight: 600;
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 .gallery-tip {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--sub);
   margin: 0;
   line-height: 1.5;

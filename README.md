@@ -785,3 +785,195 @@ useRecentlyViewedStore (cityIds, recentCities, addCity, clearAll)
 ├── WeatherDetailView.vue            (방문할 때마다 addCity 호출 — 기록)
 └── WeatherHomeView.vue → RecentlyViewedChips.vue   (recentCities 표시 — 조회 + 이동 + 초기화)
 ```
+
+---
+
+## 실습 6: Weather Axios (외부 API 연동)
+
+지금까지 화면에 있던 온도/습도/풍속 등이 전부 직접 만든 mock 데이터였는데, 실제 외부 API(OpenWeatherMap, Unsplash) 데이터로 교체하고 기능을 확장하는 회차
+세 요구사항 모두 한 번만 불러와서 Pinia 스토어(전역)에 캐싱해두고 여러 화면에서 재사용하는 동일한 패턴으로 구현
+
+### 1. OpenWeatherMap 실제 날씨 데이터 적용
+
+#### `api/weatherApi.js` — axios 인스턴스 + 호출 함수
+
+```js
+const client = axios.create({
+  baseURL: 'https://api.openweathermap.org/data/2.5',
+  params: { appid: API_KEY, units: 'metric', lang: 'kr' },
+})
+
+export async function fetchCurrentWeatherByCoords(lat, lon) {
+  const response = await client.get('/weather', { params: { lat, lon } })
+  return response.data
+}
+```
+
+- 실제 10개 도시 중 수원·강릉처럼 이름 매칭이 부정확할 수 있는 도시가 있어서 좌표(lat/lon) 기반 조회로 바꿨습니다. `mock/WeatherData.js`의 `weatherList`(온도·습도 등 mock 값)를 걷어내고 대신 API 호출에 필요한 `cityDefinitions`(id/name/lat/lon)만 남겼습니다.
+- API Key는 `.env`의 `VITE_OPENWEATHER_API_KEY`로 관리하고(`import.meta.env`로 읽음), `.env`는 `.gitignore`에 추가했습니다.
+
+#### `stores/weatherStore.js` — "한 번만 호출해서 전역에 저장"
+
+```js
+export const useWeatherStore = defineStore('weather', () => {
+  const weatherList = ref([])
+  const loaded = ref(false)
+  let inFlightRequest = null
+
+  async function fetchAll() {
+    if (loaded.value) return // 이미 불러온 적 있으면 재요청 안 함
+    if (inFlightRequest) return inFlightRequest // 여러 곳에서 동시에 불러도 요청은 한 번만
+
+    inFlightRequest = (async () => {
+      const results = await Promise.all(
+        cityDefinitions.map(async (city) => {
+          const data = await fetchCurrentWeatherByCoords(city.lat, city.lon)
+          const status = mapConditionToStatus(data.weather[0].main)
+          return { id: city.id, name: city.name, temp: Math.round(data.main.temp), status, ... }
+        }),
+      )
+      weatherList.value = results
+      loaded.value = true
+    })()
+    return inFlightRequest
+  }
+
+  function getCityById(cityId) {
+    return weatherList.value.find((city) => city.id === cityId) ?? null
+  }
+
+  return { weatherList, isLoading, error, loaded, fetchAll, getCityById }
+})
+```
+
+- `loaded` 가드 + `inFlightRequest`(진행 중인 요청 자체를 공유) 두 겹으로 Home에서 부르든 Detail에서 바로 부르든 실제 네트워크 요청은 앱 켜진 동안 딱 1번만 나가도록 했습니다.
+- `mapConditionToStatus()`: OpenWeatherMap의 날씨 코드(`weather[0].main` — `Clear`/`Clouds`/`Rain`/`Drizzle`/`Thunderstorm`/`Snow`/`Mist`/`Haze`... 등)를 이 앱이 쓰는 4종(맑음/흐림/비/눈)으로 매핑. `Clear`→맑음, `Snow`→눈, `Rain`·`Drizzle`·`Thunderstorm`→비, 그 외(`Clouds`, `Mist`, `Haze` 등)는 전부 흐림으로 취급합니다.
+- `WeatherHomeView.vue`/`WeatherDetailView.vue`에는 데이터가 없을 때(로딩 중)와 로딩이 끝났는데도 없을 때(존재하지 않는 cityId)를 `v-if`/`v-else-if`로 구분해서 로딩 중에 "찾을 수 없음" 문구가 잘못 겹쳐 뜨는 걸 방지했습니다.
+
+### 2. OpenWeatherMap의 다른 API 추가 (5 Day/3 Hour Forecast)
+
+Detail 페이지에 앞으로 5일 예보 섹션을 추가했습니다. 10개 도시 전체를 미리 부르지 않고 Detail 페이지에 실제로 들어간 도시만 그때그때 호출 + 도시별 캐싱하는 방식입니다.
+
+```js
+// api/weatherApi.js
+export async function fetchForecastByCoords(lat, lon) {
+  const response = await client.get('/forecast', { params: { lat, lon } })
+  return response.data // 3시간 간격, 5일치(최대 40개) 항목
+}
+```
+
+```js
+// stores/weatherStore.js
+const forecastByCityId = ref({}) // { [cityId]: Array<{date, temp, status, icon}> }
+
+async function fetchForecast(cityId) {
+  if (forecastByCityId.value[cityId]) return // 이미 캐시돼 있으면 재요청 안 함
+  const city = cityDefinitions.find((c) => c.id === cityId)
+  const data = await fetchForecastByCoords(city.lat, city.lon)
+  forecastByCityId.value = { ...forecastByCityId.value, [cityId]: extractDailyForecast(data.list) }
+}
+```
+
+- `extractDailyForecast()`: 3시간 간격 40개 항목 중 날짜별 정오(12:00) 데이터를 대표값으로 뽑아 5일치 배열로 정리합니다.
+- 컴포넌트로 분리(`ForecastPanel.vue`): props로 `cityId` 하나만 받고, `watch(() => props.cityId, ..., { immediate: true })`로 마운트되는 즉시 `weatherStore.fetchForecast(cityId)`를 스스로 호출합니다. `WeatherDetailView.vue`는 API 호출 시점을 신경 쓸 필요 없이 `<ForecastPanel :city-id="cityInfo.id" />` 한 줄만 넣었습니다.
+- 예보 온도도 `configStore.unit`에 맞춰 변환해서 표시(다른 온도 표시 부분과 동일하게 중복 로직으로 처리)
+
+### 3. 기타 외부 API 추가 (Unsplash)
+
+관광지 이미지가 지금까지 `picsum.photos` 랜덤 placeholder였던 걸 Unsplash Search Photos API로 관광지 이름 기반 실제 사진으로 교체했습니다. (Demo 등급은 시간당 50회 제한이라 어디에 몇 번 쓰이는지가 설계의 핵심이었습니다)
+
+#### `api/unsplashApi.js` + `stores/attractionImageStore.js`
+
+```js
+// Unsplash는 query param이 아니라 Authorization 헤더로 키를 전달
+const client = axios.create({
+  baseURL: 'https://api.unsplash.com',
+  headers: { Authorization: `Client-ID ${ACCESS_KEY}` },
+})
+
+export async function searchPhotoByQuery(query) {
+  const response = await client.get('/search/photos', {
+    params: { query: `${query} korea travel`, per_page: 1, orientation: 'landscape' },
+  })
+  const result = response.data.results[0]
+  if (!result) return null
+  return { url: result.urls.small, photographerName: result.user.name, photographerLink: ... }
+}
+```
+
+```js
+// 관광지 이름(query) 단위로 캐싱. 값이 null이어도(검색 결과 없음) 캐시해서 재검색 방지
+const imagesByQuery = ref({})
+
+async function fetchImage(query) {
+  if (query in imagesByQuery.value) return
+  const photo = await searchPhotoByQuery(query)
+  imagesByQuery.value = { ...imagesByQuery.value, [query]: photo }
+}
+```
+
+#### 3단계 이미지 폴백 체인
+
+```
+Unsplash 검색 성공
+  → 실패/결과 없음: attractionImageSrc() (로컬 /attractions/*.jpg)
+    → 그 이미지도 깨짐(@error): picsum.photos placeholder (기존 실습 2~3의 폴백)
+```
+
+#### rate limit(시간당 50회)을 고려한 두 가지 로딩 전략
+
+| 사용처                                                                 | 개수      | 전략                                                                                                                   |
+| ---------------------------------------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `WeatherCard.vue`(Home 카드), `RecommendedAttraction.vue`(히어로 카드) | 최대 11개 | **즉시 로드** — `watch(immediate:true)`로 마운트 시 바로 검색                                                          |
+| `WeatherAttractionGalleryView.vue`(관광지 40개)                        | 40개      | **지연 로드**(`LazyAttractionThumb.vue`) — `IntersectionObserver`로 실제 스크롤돼서 화면에 보이는 카드만 그때그때 검색 |
+
+```js
+// LazyAttractionThumb.vue
+observer = new IntersectionObserver(
+  (entries) => {
+    if (entries[0].isIntersecting) {
+      attractionImageStore.fetchImage(props.name)
+      observer.disconnect() // 한 번 보였으면 더 관찰 안 함
+    }
+  },
+  { rootMargin: '200px' },
+)
+```
+
+40개를 한 화면에 다 그리는 갤러리는 마운트 즉시 전부 검색하면 그 자체로 시간당 한도를 다 써버려서 많이 나열되는 곳만 지연 로딩으로 구분했습니다. `attractionImageStore`는 Home과 갤러리가 같은 캐시를 공유하므로 같은 관광지가 두 페이지에 걸쳐 나와도 중복 검색되지 않습니다.
+
+### 4. 최종 파일 구조 (실습 6 추가분)
+
+```
+src/
+├── api/
+│   ├── weatherApi.js            # OpenWeatherMap: 현재 날씨(좌표) + 5일 예보
+│   └── unsplashApi.js           # [기타 외부 API] Unsplash 사진 검색
+├── stores/
+│   ├── weatherStore.js          # 실시간 날씨 전역 캐시 + 도시별 예보 캐시
+│   └── attractionImageStore.js  # [기타 외부 API] 관광지 이름별 Unsplash 사진 캐시
+└── components/
+    ├── practice/
+    │   └── WeatherAxiosPractice.vue   # Axios 기본 동작 검증용 (라우팅 미연결)
+    └── exercise/
+        ├── ForecastPanel.vue          # [OpenWeatherMap 추가 API] 5일 예보 패널
+        └── LazyAttractionThumb.vue    # [기타 외부 API] 갤러리용 지연 로딩 썸네일
+```
+
+### 5. API/스토어 ↔ 화면 연결 관계
+
+```
+useWeatherStore
+├── fetchAll() / weatherList / getCityById()   ← OpenWeatherMap 현재 날씨
+│   ├── WeatherHomeView.vue      (onMounted 시 fetchAll 호출)
+│   ├── WeatherDetailView.vue    (loadCity 안에서 fetchAll → getCityById)
+│   └── recentlyViewedStore.js   (recentCities getter 안에서 getCityById 참조)
+└── fetchForecast() / getForecastByCityId()    ← OpenWeatherMap 5일 예보
+    └── ForecastPanel.vue        (cityId prop watch로 스스로 호출)
+
+useAttractionImageStore
+├── fetchImage() / getImageByQuery()           ← Unsplash 검색
+│   ├── WeatherCard.vue              (즉시 로드, 최대 10개)
+│   ├── RecommendedAttraction.vue    (즉시 로드, 1개)
+│   └── LazyAttractionThumb.vue      (지연 로드, 최대 40개) → WeatherAttractionGalleryView.vue
+```

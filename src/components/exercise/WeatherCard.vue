@@ -1,7 +1,8 @@
 <script setup>
 import { attractionImageSrc, handleImageError, statusAccentClass } from '@/utils/Weatherhelpers'
 import { useConfigStore } from '@/stores/configStore'
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
+import { useAttractionImageStore } from '@/stores/Attractionimagestore'
 
 // props: city(도시 객체), selected(선택 여부), attraction(현재 status에 맞는 추천 관광지)
 // emits:
@@ -35,6 +36,28 @@ const displayTemp = computed(() => {
   }
   return props.city.temp
 })
+
+// Unsplash에서 관광지 이름으로 실제 사진을 검색해서 기존 picsum placeholder(attractionImageSrc) 대신 보여줌
+// 검색 결과가 없거나 실패하면 attractionImageSrc(로컬 경로 → 실패 시 picsum)로 자연스럽게 폴백
+const attractionImageStore = useAttractionImageStore()
+
+watch(
+  () => props.attraction?.name,
+  (name) => {
+    if (name) attractionImageStore.fetchImage(name)
+  },
+  { immediate: true },
+)
+
+const attractionPhoto = computed(() => {
+  if (!props.attraction) return null
+  return attractionImageStore.getImageByQuery(props.attraction.name)
+})
+
+const thumbSrc = computed(() => {
+  if (!props.attraction) return null
+  return attractionPhoto.value?.url ?? attractionImageSrc(props.attraction.image)
+})
 </script>
 
 <template>
@@ -44,9 +67,8 @@ const displayTemp = computed(() => {
     @click="emit('select-card', city)"
   >
     <img
-      v-if="attraction"
       class="card-thumb"
-      :src="attractionImageSrc(attraction.image)"
+      :src="thumbSrc"
       :alt="attraction.name"
       @error="handleImageError($event, attraction.image)"
     />

@@ -1,23 +1,30 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { findCityById, findAttraction } from '@/mock/Weatherdata'
+import { findAttraction } from '@/mock/WeatherData'
 import RecommendedAttraction from '@/components/exercise/RecommendedAttraction.vue'
 import { statusIcon } from '@/utils/Weatherhelpers'
-import IconArrowLeft from '@/components/icons/Iconarrowleft.vue'
+import IconArrowLeft from '@/components/icons/IconArrowLeft.vue'
 import { useConfigStore } from '@/stores/configStore'
 import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore'
+import { useWeatherStore } from '@/stores/weatherStore'
+import ForecastPanel from '@/components/exercise/ForecastPanel.vue'
 
 // Router 동적 경로 매칭(:cityId)을 기반으로 Mount 시점에 Mock Data에서 도시 객체 선택
 const route = useRoute()
 const router = useRouter()
 const recentlyViewedStore = useRecentlyViewedStore()
+const weatherStore = useWeatherStore()
 
 const cityInfo = ref(null)
 
-function loadCity(cityId) {
-  cityInfo.value = findCityById(cityId)
+async function loadCity(cityId) {
+  // weatherStore.fetchAll()은 이미 로드된 경우 즉시 반환되므로
+  // Home을 거치지 않고 Detail로 바로 들어와도 여기서 최초 1회 호출이 이뤄짐
+  await weatherStore.fetchAll()
+  cityInfo.value = weatherStore.getCityById(cityId)
   // 유효한 도시로 확인된 경우에만 최근 본 도시 기록에 추가
+  // (존재하지 않는 cityId로 접근한 경우엔 기록하지 않음)
   if (cityInfo.value) {
     recentlyViewedStore.addCity(cityInfo.value.id)
   }
@@ -71,8 +78,12 @@ function goBackToDashboard() {
 <template>
   <div class="page-bg">
     <div class="content-area">
+      <div class="loading-box" v-if="weatherStore.isLoading && !cityInfo">
+        <p class="loading-text">실시간 날씨 데이터를 불러오는 중...</p>
+      </div>
+
       <!-- 존재하지 않는 cityId로 접근한 경우 -->
-      <div class="not-found-box" v-if="!cityInfo">
+      <div class="not-found-box" v-else-if="!cityInfo">
         <p class="not-found-title">해당 도시 정보를 찾을 수 없어요.</p>
         <p class="not-found-sub">주소에 포함된 도시 코드를 다시 확인해주세요.</p>
         <button class="back-btn" @click="goBackToDashboard">
@@ -103,6 +114,8 @@ function goBackToDashboard() {
           :recommended-attraction="attraction"
           :show-empty-state="false"
         />
+
+        <ForecastPanel :city-id="cityInfo.id" />
 
         <button class="back-btn" @click="goBackToDashboard">
           <IconArrowLeft :size="15" />

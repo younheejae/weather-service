@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, watchEffect } from 'vue'
+import { ref, computed, watch, watchEffect, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BaseDashboardCard from '@/components/exercise/BaseDashboardCard.vue'
 import SearchBar from '@/components/exercise/SearchBar.vue'
@@ -7,13 +7,20 @@ import WeatherStatusFilter from '@/components/exercise/WeatherStatusFilter.vue'
 import WeatherStatusHints from '@/components/exercise/WeatherStatusHints.vue'
 import RecommendedAttraction from '@/components/exercise/RecommendedAttraction.vue'
 import WeatherCard from '@/components/exercise/WeatherCard.vue'
-import { weatherList, attractionMap } from '@/mock/Weatherdata'
+import { attractionMap } from '@/mock/WeatherData'
 import HeroBand from '@/components/exercise/HeroBand.vue'
 import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore'
 import RecentlyViewedChips from '@/components/exercise/RecentlyViewedChips.vue'
+import { useWeatherStore } from '@/stores/weatherStore'
 
 const router = useRouter()
 const recentlyViewedStore = useRecentlyViewedStore()
+const weatherStore = useWeatherStore()
+
+// API로 데이터를 한 번만 불러와서 전역(store)에 저장해두고 재사용
+onMounted(() => {
+  weatherStore.fetchAll()
+})
 
 // 반응형 상태 (ref)
 const searchQuery = ref('')
@@ -25,8 +32,8 @@ const statusFilter = ref(null) // null = 전체 보기
 // computed
 const searchFilteredList = computed(() => {
   const keyword = searchQuery.value.trim()
-  if (!keyword) return weatherList
-  return weatherList.filter((city) => city.name.includes(keyword))
+  if (!keyword) return weatherStore.weatherList
+  return weatherStore.weatherList.filter((city) => city.name.includes(keyword))
 })
 
 const filteredWeatherList = computed(() =>
@@ -138,6 +145,11 @@ function attractionOf(city) {
           :status-filter="statusFilter"
           @clear-filter="clearStatusFilter"
         />
+
+        <p v-if="weatherStore.isLoading" class="status-text">실시간 날씨 데이터를 불러오는 중...</p>
+        <p v-else-if="weatherStore.error" class="status-text status-text--error">
+          {{ weatherStore.error }}
+        </p>
 
         <div class="card-grid">
           <WeatherCard

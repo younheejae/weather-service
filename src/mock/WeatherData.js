@@ -1,65 +1,18 @@
-// 실습 1~3에서 쓰던 mock 데이터를 여러 view(Home/Detail/Gallery)가
-// 공유할 수 있도록 별도 파일로 분리함
+// API를 호출할 때 필요한 도시 식별 정보(id/이름/위경도)와 직접 큐레이션한 관광지 데이터(attractionMap)"만 남긴다
 
-export const weatherList = [
-  {
-    id: 'city_01',
-    name: '서울',
-    temp: 28,
-    status: '맑음',
-    humidity: 45,
-    windSpeed: 2.1,
-    icon: '☀️',
-  },
-  { id: 'city_02', name: '수원', temp: 24, status: '비', humidity: 78, windSpeed: 3.4, icon: '🌧️' },
-  {
-    id: 'city_03',
-    name: '부산',
-    temp: 26,
-    status: '흐림',
-    humidity: 60,
-    windSpeed: 4.0,
-    icon: '🌥️',
-  },
-  {
-    id: 'city_04',
-    name: '인천',
-    temp: 23,
-    status: '흐림',
-    humidity: 66,
-    windSpeed: 3.8,
-    icon: '🌥️',
-  },
-  {
-    id: 'city_05',
-    name: '대구',
-    temp: 30,
-    status: '맑음',
-    humidity: 38,
-    windSpeed: 1.9,
-    icon: '☀️',
-  },
-  {
-    id: 'city_06',
-    name: '대전',
-    temp: 22,
-    status: '흐림',
-    humidity: 55,
-    windSpeed: 2.6,
-    icon: '🌥️',
-  },
-  {
-    id: 'city_07',
-    name: '광주',
-    temp: 27,
-    status: '맑음',
-    humidity: 50,
-    windSpeed: 2.3,
-    icon: '☀️',
-  },
-  { id: 'city_08', name: '울산', temp: 25, status: '눈', humidity: 58, windSpeed: 3.1, icon: '❄️' },
-  { id: 'city_09', name: '제주', temp: 29, status: '비', humidity: 82, windSpeed: 5.2, icon: '🌧️' },
-  { id: 'city_10', name: '강릉', temp: 21, status: '눈', humidity: 70, windSpeed: 2.8, icon: '❄️' },
+// 도시 식별 정보. id/name은 기존과 동일하게 유지해서 attractionMap의 키와 맞추고
+// lat/lon은 OpenWeatherMap 좌표 기반 조회에 사용함
+export const cityDefinitions = [
+  { id: 'city_01', name: '서울', lat: 37.5665, lon: 126.978 },
+  { id: 'city_02', name: '수원', lat: 37.2636, lon: 127.0286 },
+  { id: 'city_03', name: '부산', lat: 35.1796, lon: 129.0756 },
+  { id: 'city_04', name: '인천', lat: 37.4563, lon: 126.7052 },
+  { id: 'city_05', name: '대구', lat: 35.8714, lon: 128.6014 },
+  { id: 'city_06', name: '대전', lat: 36.3504, lon: 127.3845 },
+  { id: 'city_07', name: '광주', lat: 35.1595, lon: 126.8526 },
+  { id: 'city_08', name: '울산', lat: 35.5384, lon: 129.3114 },
+  { id: 'city_09', name: '제주', lat: 33.4996, lon: 126.5312 },
+  { id: 'city_10', name: '강릉', lat: 37.7519, lon: 128.8761 },
 ]
 
 // 관광지 추천 데이터: 도시(10) × status(4) = 40개
@@ -278,9 +231,9 @@ export const attractionMap = {
   },
 }
 
-// 도시 코드로 도시 객체를 찾는 헬퍼 (Detail 페이지의 mount 시점 조회에 사용)
+// 도시 코드로 도시 식별 정보를 찾는 헬퍼 (이름 표시 등, 실시간 날씨는 weatherStore 참고)
 export function findCityById(cityId) {
-  return weatherList.find((city) => city.id === cityId) ?? null
+  return cityDefinitions.find((city) => city.id === cityId) ?? null
 }
 
 // 도시 + status로 추천 관광지 하나를 찾는 헬퍼
@@ -289,7 +242,7 @@ export function findAttraction(cityId, status) {
 }
 
 // attractionMap(도시 × status 중첩 객체)을
-// 관광지 하나당 레코드 하나인 평탄화된 배열 40개로 변환.
+// 관광지 하나당 레코드 하나인 평탄화된 배열 40개로 변환
 export const attractionGallery = Object.entries(attractionMap).flatMap(([cityId, byStatus]) => {
   const city = findCityById(cityId)
   return Object.entries(byStatus).map(([status, attraction]) => ({

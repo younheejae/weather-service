@@ -1,11 +1,13 @@
 <script setup>
 import { attractionImageSrc, handleImageError } from '@/utils/Weatherhelpers'
+import { useAttractionImageStore } from '@/stores/Attractionimagestore'
+import { watch, computed } from 'vue'
 
 // props: selectedCityInfo(선택된 도시 객체), recommendedAttraction(추천 관광지)
 // Home에서는 선택 안 했을 때의 안내문구가 필요하지만, Detail 페이지에서는 도시가
 // 항상 정해져 있으므로 showEmptyState=false로 안내문구를 끄고 히어로 카드만 씀
 
-defineProps({
+const props = defineProps({
   selectedCityInfo: {
     type: Object,
     default: null,
@@ -19,6 +21,28 @@ defineProps({
     default: true,
   },
 })
+
+// Unsplash에서 관광지 이름으로 실제 사진을 검색
+// 결과 없거나 실패하면 attractionImageSrc(로컬 경로 → 실패 시 picsum)로 폴백
+const attractionImageStore = useAttractionImageStore()
+
+watch(
+  () => props.recommendedAttraction?.name,
+  (name) => {
+    if (name) attractionImageStore.fetchImage(name)
+  },
+  { immediate: true },
+)
+
+const attractionPhoto = computed(() => {
+  if (!props.recommendedAttraction) return null
+  return attractionImageStore.getImageByQuery(props.recommendedAttraction.name)
+})
+
+const heroImageSrc = computed(() => {
+  if (!props.recommendedAttraction) return null
+  return attractionPhoto.value?.url ?? attractionImageSrc(props.recommendedAttraction.image)
+})
 </script>
 
 <template>
@@ -29,10 +53,11 @@ defineProps({
   <div class="recommend-box" v-if="recommendedAttraction">
     <img
       class="recommend-img"
-      :src="attractionImageSrc(recommendedAttraction.image)"
+      :src="heroImageSrc"
       :alt="recommendedAttraction.name"
       @error="handleImageError($event, recommendedAttraction.image)"
     />
+    <div class="recommend-overlay"></div>
     <div class="recommend-overlay"></div>
     <div class="recommend-content">
       <p class="recommend-eyebrow">
