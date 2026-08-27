@@ -1,9 +1,10 @@
 <script setup>
-// [본인 추가 컴포넌트] weatherStatusCounts에서 파생된 2차 지표(indoorRecommendedCount)와
-// 현재 적용된 날씨 필터 상태를 안내 문구로 보여줌
+import { statusIcon } from '@/utils/Weatherhelpers'
 
-// props: indoorRecommendedCount(비/눈인 도시 수), statusFilter(현재 필터)
-// emits: clear-filter - "전체 보기" 버튼 클릭 시 부모에게 필터 해제 요청
+// indoorRecommendedCount(파생 지표)와 현재 필터 상태를 안내
+// props: indoorRecommendedCount, statusFilter
+// emits: clear-filter
+
 defineProps({
   indoorRecommendedCount: {
     type: Number,
@@ -16,11 +17,6 @@ defineProps({
 })
 
 const emit = defineEmits(['clear-filter'])
-
-function statusIcon(status) {
-  const map = { 맑음: '☀️', 흐림: '🌥️', 비: '🌧️', 눈: '❄️' }
-  return map[status] ?? ''
-}
 </script>
 
 <template>

@@ -1,8 +1,10 @@
 <script setup>
-// [본인 추가 컴포넌트] 도시를 아직 선택하지 않았을 때는 안내 문구를,
-// 선택했을 때는 해당 도시/날씨에 맞는 추천 관광지 히어로 카드를 보여줌
+import { attractionImageSrc, handleImageError } from '@/utils/Weatherhelpers'
 
 // props: selectedCityInfo(선택된 도시 객체), recommendedAttraction(추천 관광지)
+// Home에서는 선택 안 했을 때의 안내문구가 필요하지만, Detail 페이지에서는 도시가
+// 항상 정해져 있으므로 showEmptyState=false로 안내문구를 끄고 히어로 카드만 씀
+
 defineProps({
   selectedCityInfo: {
     type: Object,
@@ -12,26 +14,18 @@ defineProps({
     type: Object,
     default: null,
   },
+  showEmptyState: {
+    type: Boolean,
+    default: true,
+  },
 })
-
-function attractionImageSrc(imageFileName) {
-  return `/attractions/${imageFileName}`
-}
-
-function handleImageError(event, seedText) {
-  const seed = encodeURIComponent(seedText || 'weather-mockup')
-  event.target.onerror = null // 무한 루프 방지
-  event.target.src = `https://picsum.photos/seed/${seed}/640/420`
-}
 </script>
 
 <template>
-  <!-- 아무것도 선택하지 않았을 때만 안내 문구 노출 -->
-  <div class="status-bar status-bar--muted" v-if="!selectedCityInfo">
+  <div class="status-bar status-bar--muted" v-if="showEmptyState && !selectedCityInfo">
     카드를 클릭하거나 검색해 보세요.
   </div>
 
-  <!-- 선택된 도시의 현재 날씨에 맞는 추천 관광지 -->
   <div class="recommend-box" v-if="recommendedAttraction">
     <img
       class="recommend-img"
@@ -66,10 +60,8 @@ function handleImageError(event, seedText) {
 }
 .status-bar--muted {
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
-  font-weight: 500;
   border: 1px solid #d9dde3;
+  font-weight: 500;
 }
 
 .recommend-box {

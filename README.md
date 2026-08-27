@@ -387,3 +387,206 @@ WeatherParent
     ├── WeatherStatusHints
     └── WeatherCard × N        (v-for)
 ```
+
+---
+
+## 실습 4: Weather Router (Vue Router 페이지 분리)
+
+`WeatherParent.vue` 단일 화면이었던 실습 3 결과물을 Vue Router를 이용해 여러 페이지(View)로 쪼개고 URL로 이동할 수 있게 만드는 회차
+
+### 1. Vue Router 설정: Lazy Loading + Catch-all Route
+
+`src/router/index.js`에 라우트 5개를 정의했습니다.
+
+```js
+const routes = [
+  { path: '/', name: 'home', component: () => import('../views/WeatherHomeView.vue') },
+  { path: '/about', name: 'about', component: () => import('../views/WeatherAboutView.vue') },
+  {
+    path: '/weather/:cityId',
+    name: 'weather-detail',
+    component: () => import('../views/WeatherDetailView.vue'),
+  },
+  {
+    // [본인 추가 view] 40개 관광지를 전부 모아 보여주는 갤러리 페이지
+    path: '/attractions',
+    name: 'attractions',
+    component: () => import('../views/WeatherAttractionGalleryView.vue'),
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('../views/NotFoundView.vue'),
+  },
+]
+```
+
+- **지연 로딩(Lazy Loading)**: `component`에 정적 `import` 대신 `() => import(...)` 형태의 동적 import를 썼습니다. 이 자체가 코드 스플리팅 포인트가 되어서, 해당 라우트에 처음 진입할 때만 관련 청크가 로드됩니다.
+- **Catch-all Route**: 맨 마지막 라우트 `path: '/:pathMatch(.*)*'`는 위 4개 라우트 중 어디에도 매칭되지 않는 모든 경로를 잡아서 `NotFoundView`로 보냅니다. `:pathMatch(.*)*`을 사용했습니다.
+- 그 외에 `scrollBehavior()`를 추가해서 라우트가 바뀔 때마다 항상 스크롤을 맨 위로 초기화하도록 했습니다.
+
+### 2. `App.vue` — Navigation Bar + RouterView
+
+```html
+<div class="app-shell">
+  <div class="nav-wrap">
+    <nav class="nav-bar">
+      <RouterLink to="/" class="brand">🌤 날씨 대시보드</RouterLink>
+      <div class="nav-links">
+        <RouterLink to="/" exact-active-class="active">대시보드</RouterLink>
+        <RouterLink to="/attractions" active-class="active">관광지 모아보기</RouterLink>
+        <RouterLink to="/about" active-class="active">서비스 소개</RouterLink>
+      </div>
+    </nav>
+  </div>
+
+  <RouterView />
+</div>
+```
+
+- `<RouterLink>`로 대시보드/관광지 갤러리/서비스 소개 3개 메뉴를 연결하고, `<RouterView>`가 현재 라우트에 매칭된 View 컴포넌트를 그 자리에 렌더링합니다.
+
+### 3. `WeatherHomeView.vue` — WeatherParent 대체, `/` 경로
+
+실습 3의 `WeatherParent.vue` 로직(반응형 상태·computed·watch·이벤트 핸들러)을 그대로 옮겨왔습니다. 달라진 부분은 상세보기 버튼의 동작 하나입니다.
+
+```js
+import { useRouter } from 'vue-router'
+const router = useRouter()
+
+// 기존: window.alert(`${city.name}의 현재 날씨는 [${city.status}] 상태입니다.`)
+// 변경: Programmatic Navigation으로 상세 페이지 이동
+function showDetail(city) {
+  router.push('/weather/' + city.id)
+}
+```
+
+`useRouter()`로 라우터 인스턴스를 가져와 `router.push()`를 호출하는 방식(Programmatic Navigation)으로 바꿨습니다. 또한, `mock/WeatherData.js`에서 `weatherList`, `attractionMap`을 import해서 쓰기 때문에 이 View 자체에는 더 이상 데이터 정의 코드가 없습니다.
+
+### 4. `WeatherDetailView.vue` — 지역별 상세 기상관측 정보, `/weather/:cityId` 경로
+
+```js
+import { useRoute, useRouter } from 'vue-router'
+import { findCityById, findAttraction } from '@/mock/WeatherData'
+
+const route = useRoute()
+const cityInfo = ref(null)
+
+// Router 동적 경로 매칭(:cityId)을 기반으로 Mount 시점에 Mock Data에서 도시 객체 선택
+onMounted(() => {
+  cityInfo.value = findCityById(route.params.cityId)
+})
+
+// 상세 페이지에 머무른 채 :cityId만 바뀌는 경우(같은 컴포넌트 재사용)도 대응
+watch(
+  () => route.params.cityId,
+  (newCityId) => {
+    cityInfo.value = findCityById(newCityId)
+  },
+)
+```
+
+- `route.params.cityId`로 주소에 담긴 도시 코드를 읽어와서 `onMounted` 시점에 mock 데이터(`weatherList`)에서 해당 도시 객체를 찾아 선택합니다.
+- 온도/습도/풍속/기상현황 등 상세 기상관측 정보 5개 항목을 하나의 `.panel` 박스 안에 정리해서 보여주고, 그 아래에 이 도시·날씨에 맞는 추천 관광지 카드를 `RecommendedAttraction.vue`(실습 3 컴포넌트)를 그대로 재사용해서 붙였습니다.
+- 존재하지 않는 `cityId`로 접근한 경우(`cityInfo`가 `null`)에는 "해당 도시 정보를 찾을 수 없어요" 안내와 함께 대시보드로 돌아가는 버튼만 보여줍니다.
+- 뒤로가기 버튼은 텍스트 화살표(`←`) 대신 재사용 가능하도록 분리한 `IconArrowLeft.vue`(SVG 컴포넌트)를 불러다 씁니다.
+
+### 5. `WeatherAboutView.vue` — 서비스 소개, `/about` 경로
+
+프로젝트에 대한 간단한 소개 문구와 기능 목록을 정적으로 작성하고, 하단에 "대시보드 홈으로 이동" 버튼을 배치해 `router.push('/')`로 메인 화면으로 돌아갈 수 있게 했습니다.
+
+### 6. 본인 추가 View — `WeatherAttractionGalleryView.vue`, `/attractions` 경로
+
+실습 1~3에서 만든 40개(도시 10 × status 4)의 관광지 데이터를 전부 한 번에 모아서 보여주는 갤러리 페이지입니다. 기존에는 선택한 도시 하나에 대한 관광지 1개만 보였다면 여기서는 관광지 자체가 주인공이 되도록 구성했습니다.
+
+```js
+// mock/WeatherData.js — attractionMap(도시 × status 중첩 객체)을
+// 관광지 하나당 레코드 하나인 평탄화된 배열 40개로 변환
+export const attractionGallery = Object.entries(attractionMap).flatMap(([cityId, byStatus]) => {
+  const city = findCityById(cityId)
+  return Object.entries(byStatus).map(([status, attraction]) => ({
+    id: `${cityId}_${status}`,
+    cityId,
+    cityName: city ? city.name : cityId,
+    status,
+    ...attraction, // name, tip, image
+  }))
+})
+```
+
+카드 하나는 관광지 이름이 크게 나오고, 그 아래 "{지역} · {날씨}일 때 추천" 캡션과 tip 문구가 작게 붙는 순서로 배치했습니다. 실습 3에서 만든 `SearchBar.vue`를 재사용해서 관광지 이름/지역 이름으로 검색·필터링도 가능합니다.
+
+### 7. 여러 View가 공유하는 데이터/유틸/컴포넌트 분리
+
+View가 4개(+에러 페이지 1개)로 늘어나면서, Home에만 있던 데이터와 헬퍼 함수를 각 View가 각자 중복 정의하면 데이터가 어긋날 위험이 있어서 아래처럼 별도 모듈로 뽑아냈습니다.
+
+| 파일                                     | 역할                                                                                                                                                                                                        |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/mock/WeatherData.js`                | `weatherList`, `attractionMap`, `attractionGallery`(40개 평탄화 배열), `findCityById`, `findAttraction` — 데이터의 단일 출처(single source of truth)                                                        |
+| `src/utils/WeatherHelpers.js`            | `statusIcon`, `statusAccentClass`, `attractionImageSrc`, `handleImageError` — 여러 컴포넌트/뷰에서 반복되던 헬퍼 함수 모음                                                                                  |
+| `src/components/common/HeroBand.vue`     | Home, Gallery 뷰가 완전히 동일하게 쓰던 진한 남색 히어로 배너를 컴포넌트로 분리. `eyebrow`/`title`은 props, 부제(sub)는 슬롯으로 받아서 `attractionGallery.length` 같은 동적 값도 그대로 interpolation 가능 |
+| `src/components/icons/IconArrowLeft.vue` | 뒤로가기 화살표 SVG. `stroke="currentColor"`라서 부모 버튼의 글자색을 그대로 따라감. 텍스트 화살표(`←`) 대신 여러 뒤로가기 버튼에서 공통으로 재사용                                                         |
+
+### 8. 라우트 표
+
+| path               | name             | component                          | 설명                                      |
+| ------------------ | ---------------- | ---------------------------------- | ----------------------------------------- |
+| `/`                | `home`           | `WeatherHomeView.vue`              | 메인 날씨 대시보드 (WeatherParent 대체)   |
+| `/weather/:cityId` | `weather-detail` | `WeatherDetailView.vue`            | 도시별 상세 기상관측 + 추천 관광지 페이지 |
+| `/attractions`     | `attractions`    | `WeatherAttractionGalleryView.vue` | [본인 추가] 관광지 40개 모아보기 갤러리   |
+| `/about`           | `about`          | `WeatherAboutView.vue`             | 서비스 소개 정적 페이지                   |
+| `/:pathMatch(.*)*` | `not-found`      | `NotFoundView.vue`                 | Catch-all Route (정의되지 않은 경로)      |
+
+### 9. 최종 파일 구조
+
+```
+src/
+├── main.js                              # 라우터 인스턴스 전역 주입 (.use(router))
+├── App.vue                              # 내비게이션 바(RouterLink) + 메인 수문장(RouterView)
+├── router/
+│   └── index.js                         # 라우트 규칙(routes 배열) 정의 + Lazy Loading + Catch-all
+├── mock/
+│   └── WeatherData.js                   # weatherList / attractionMap / attractionGallery (단일 출처 제공)
+├── utils/
+│   └── WeatherHelpers.js                # statusIcon 등 여러 곳에서 쓰는 공용 헬퍼
+├── components/
+│   ├── common/
+│   │   └── HeroBand.vue                 # Home/Gallery 공용 히어로 배너
+│   ├── icons/
+│   │   └── IconArrowLeft.vue            # 뒤로가기 SVG 아이콘
+│   └── exercise/                        # 실습 3에서 분리한 부품 컴포넌트 (로직 변경 없이 재사용)
+│       ├── BaseDashboardCard.vue
+│       ├── SearchBar.vue
+│       ├── WeatherCard.vue
+│       ├── WeatherStatusFilter.vue
+│       ├── WeatherStatusHints.vue
+│       └── RecommendedAttraction.vue
+└── views/                               # 페이지 단위 컴포넌트 보관 폴더
+    ├── WeatherHomeView.vue              # 메인 날씨 대시보드 화면
+    ├── WeatherAboutView.vue             # 서비스 소개용 정적 페이지
+    ├── WeatherDetailView.vue            # :cityId 패턴을 수신하는 동적 상세 페이지
+    ├── WeatherAttractionGalleryView.vue # [본인 추가] 관광지 40개 모아보기
+    └── NotFoundView.vue                 # 정의되지 않은 경로 접근 시 (Catch-all Route)
+```
+
+### 10. 페이지(View) 트리 (라우트 기준)
+
+```
+App (Navigation Bar + RouterView)
+├── / → WeatherHomeView
+│   ├── HeroBand
+│   ├── BaseDashboardCard (검색 패널) → SearchBar
+│   ├── RecommendedAttraction
+│   └── BaseDashboardCard (목록 패널)
+│       ├── WeatherStatusFilter
+│       ├── WeatherStatusHints
+│       └── WeatherCard × N → click-detail 시 router.push('/weather/' + id)
+├── /weather/:cityId → WeatherDetailView
+│   ├── IconArrowLeft + 뒤로가기 버튼
+│   └── RecommendedAttraction (재사용)
+├── /attractions → WeatherAttractionGalleryView   [본인 추가 view]
+│   ├── HeroBand
+│   └── BaseDashboardCard (검색 패널) → SearchBar
+├── /about → WeatherAboutView
+└── /:pathMatch(.*)* → NotFoundView
+```

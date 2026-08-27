@@ -1,12 +1,15 @@
 <script setup>
-// props: 부모(WeatherParent)의 searchQuery 반응형 값을 그대로 전달받아 표시
-// emits:
-//   - update-query: input 값이 바뀔 때마다 부모에게 검색어를 전달
-//   - reset: 초기화 버튼 클릭 시 부모에게 알림 (부모가 검색어/필터를 초기화)
+// props: searchQuery(부모의 검색어 상태), placeholder(재사용 시 문구 변경용, 선택)
+// emits: update-query(입력할 때마다 값 전달), reset(초기화 버튼 클릭)
+
 defineProps({
   searchQuery: {
     type: String,
     default: '',
+  },
+  placeholder: {
+    type: String,
+    default: '검색할 도시 이름 입력 (한글)',
   },
 })
 
@@ -22,17 +25,12 @@ function onInput(event) {
     <div class="search-row">
       <div class="search-field">
         <span class="search-icon">⌕</span>
-        <input
-          type="text"
-          :value="searchQuery"
-          @input="onInput"
-          placeholder="검색할 도시 이름 입력 (한글)"
-        />
+        <input type="text" :value="searchQuery" @input="onInput" :placeholder="placeholder" />
       </div>
       <button class="reset-btn" @click="emit('reset')">초기화</button>
     </div>
     <p class="search-hint" v-show="searchQuery">
-      검색 중인 도시: <strong>{{ searchQuery }}</strong>
+      검색 중: <strong>{{ searchQuery }}</strong>
     </p>
   </div>
 </template>
@@ -52,7 +50,7 @@ function onInput(event) {
   top: 50%;
   transform: translateY(-50%);
   color: var(--sub);
-  font-size: 16px;
+  font-size: 24px;
   pointer-events: none;
 }
 input[type='text'] {

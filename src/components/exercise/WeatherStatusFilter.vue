@@ -1,9 +1,10 @@
 <script setup>
-// [본인 추가 컴포넌트] 지역별 날씨 현황 제목 옆의 통계 칩(☀️/🌥️/🌧️/❄️)
-// 칩을 누르면 해당 날씨인 도시만 필터링하고, 다시 누르면 해제됨
+import { statusIcon } from '@/utils/Weatherhelpers'
 
+// 지역별 날씨 현황 제목 옆 통계 칩(☀️/🌥️/🌧️/❄️)
 // props: weatherStatusCounts(상태별 도시 수), statusFilter(현재 선택된 필터)
-// emits: toggle-filter(status) - 칩 클릭 시 부모에게 어떤 상태를 토글할지 전달
+// emits: toggle-filter(status)
+
 defineProps({
   statusOrder: {
     type: Array,
@@ -20,11 +21,6 @@ defineProps({
 })
 
 const emit = defineEmits(['toggle-filter'])
-
-function statusIcon(status) {
-  const map = { 맑음: '☀️', 흐림: '🌥️', 비: '🌧️', 눈: '❄️' }
-  return map[status] ?? ''
-}
 </script>
 
 <template>

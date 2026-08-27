@@ -1,12 +1,11 @@
 <script setup>
-// props:
-//   - city: 표시할 도시 객체 전체 (name/temp/status/humidity/windSpeed/icon 등)
-//   - selected: 현재 선택된 카드인지 여부 (부모의 selectedCityInfo와 비교한 결과)
-//   - attraction: 이 도시의 현재 status에 맞는 추천 관광지 (썸네일용)
+import { attractionImageSrc, handleImageError, statusAccentClass } from '@/utils/Weatherhelpers'
 
+// props: city(도시 객체), selected(선택 여부), attraction(현재 status에 맞는 추천 관광지)
 // emits:
-//   - select-card: 카드 클릭 시 부모에게 이 도시를 선택했음을 전달
-//   - click-detail: [상세보기] 버튼 클릭 시 부모에게 상세 알림을 요청 (버블링 방지)
+//   - select-card: 카드 클릭 시 이 도시를 선택했음을 부모에 전달
+//   - click-detail: [상세보기] 클릭 시 부모에 알림
+
 defineProps({
   city: {
     type: Object,
@@ -23,26 +22,6 @@ defineProps({
 })
 
 const emit = defineEmits(['select-card', 'click-detail'])
-
-function attractionImageSrc(imageFileName) {
-  return `/attractions/${imageFileName}`
-}
-
-function handleImageError(event, seedText) {
-  const seed = encodeURIComponent(seedText || 'weather-mockup')
-  event.target.onerror = null
-  event.target.src = `https://picsum.photos/seed/${seed}/640/420`
-}
-
-function statusAccentClass(status) {
-  const map = {
-    맑음: 'accent-sunny',
-    흐림: 'accent-cloudy',
-    비: 'accent-rainy',
-    눈: 'accent-snowy',
-  }
-  return map[status] ?? ''
-}
 </script>
 
 <template>
