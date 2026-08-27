@@ -56,7 +56,7 @@ defineProps({
   padding: 20px 14px;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 16px;
+  margin-bottom: 36px;
 }
 .status-bar--muted {
   background: rgba(255, 255, 255, 0.04);
@@ -68,7 +68,7 @@ defineProps({
   position: relative;
   border-radius: 22px;
   overflow: hidden;
-  margin-bottom: 18px;
+  margin-bottom: 36px;
   min-height: 200px;
   display: flex;
   align-items: flex-end;

@@ -9,15 +9,18 @@ import RecommendedAttraction from '@/components/exercise/RecommendedAttraction.v
 import WeatherCard from '@/components/exercise/WeatherCard.vue'
 import { weatherList, attractionMap } from '@/mock/Weatherdata'
 import HeroBand from '@/components/exercise/HeroBand.vue'
+import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore'
+import RecentlyViewedChips from '@/components/exercise/RecentlyViewedChips.vue'
 
 const router = useRouter()
+const recentlyViewedStore = useRecentlyViewedStore()
 
 // 반응형 상태 (ref)
 const searchQuery = ref('')
-const selectedCityInfo = ref(null)
+const selectedCityInfo = ref(null) // 선택된 도시의 객체 전체 (null = 선택 안 함)
 
 const statusOrder = ['맑음', '흐림', '비', '눈']
-const statusFilter = ref(null)
+const statusFilter = ref(null) // null = 전체 보기
 
 // computed
 const searchFilteredList = computed(() => {
@@ -100,7 +103,9 @@ function attractionOf(city) {
       도시를 검색하거나 카드를 눌러 날씨와 추천 관광지를 확인해보세요.
     </HeroBand>
 
-    <div class="content-area">
+    <RecentlyViewedChips v-if="recentlyViewedStore.recentCities.length > 0" />
+
+    <div class="content-area content-area--top">
       <BaseDashboardCard>
         <template #header>도시 검색</template>
         <SearchBar
@@ -109,7 +114,9 @@ function attractionOf(city) {
           @reset="clearSearch"
         />
       </BaseDashboardCard>
+    </div>
 
+    <div class="content-area content-area--bottom">
       <RecommendedAttraction
         :selected-city-info="selectedCityInfo"
         :recommended-attraction="recommendedAttraction"
@@ -185,60 +192,24 @@ function attractionOf(city) {
   letter-spacing: -0.01em;
 }
 
-.hero-band {
-  width: 100%;
-  background: radial-gradient(circle at 15% 0%, #1c2e66 0%, #101a3d 45%, #0b1330 100%);
-}
-.hero-inner {
-  width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 108px 16px 40px;
-  box-sizing: border-box;
-}
-@media (min-width: 900px) {
-  .hero-inner {
-    max-width: 880px;
-    padding: 124px 32px 44px;
-  }
-}
-
 .content-area {
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 16px 60px;
+  padding: 48px 16px 60px;
   box-sizing: border-box;
 }
 @media (min-width: 900px) {
   .content-area {
     max-width: 880px;
-    padding: 32px 32px 90px;
+    padding: 48px 32px 90px;
   }
 }
-
-.eyebrow {
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: #cfe0ff;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 4px 10px;
-  border-radius: 999px;
-  margin: 0 0 10px;
+.content-area--top {
+  padding-bottom: 0;
 }
-.hero-inner h1 {
-  font-size: 27px;
-  font-weight: 800;
-  margin: 0 0 6px;
-  letter-spacing: -0.02em;
-  color: #ffffff;
-}
-.hero-inner .sub {
-  font-size: 14px;
-  color: #b7c3e8;
-  margin: 0;
+.content-area--bottom {
+  padding-top: 0;
 }
 
 .card-grid {

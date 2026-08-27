@@ -137,13 +137,13 @@ function updateSearchQuery(value) {
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 16px 60px;
+  padding: 48px 16px 60px;
   box-sizing: border-box;
 }
 @media (min-width: 900px) {
   .content-area {
     max-width: 960px;
-    padding: 32px 32px 90px;
+    padding: 48px 32px 90px;
   }
 }
 

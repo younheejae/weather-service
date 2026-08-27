@@ -19,7 +19,7 @@
 .panel {
   border-radius: 22px;
   padding: 22px;
-  margin-bottom: 18px;
+  margin-bottom: 36px;
   background: var(--panel-bg);
   border: 1px solid var(--panel-line);
   box-shadow: 0 10px 24px rgba(16, 24, 48, 0.06);

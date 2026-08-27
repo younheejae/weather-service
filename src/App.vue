@@ -1,4 +1,6 @@
-<script setup></script>
+<script setup>
+import UnitToggler from '@/components/exercise/UnitToggler.vue'
+</script>
 
 <template>
   <div class="app-shell">
@@ -13,13 +15,16 @@
           >
           <RouterLink to="/about" class="nav-link" active-class="active">서비스 소개</RouterLink>
         </div>
+
+        <div class="nav-unit-wrap">
+          <UnitToggler />
+        </div>
       </nav>
     </div>
 
     <RouterView />
   </div>
 </template>
-
 <style scoped>
 .app-shell {
   min-height: 100vh;
@@ -32,7 +37,7 @@
   left: 0;
   right: 0;
   z-index: 40;
-  padding: 18px 16px 0;
+  padding: 22px 16px 0;
   box-sizing: border-box;
   display: flex;
   justify-content: center;
@@ -100,7 +105,11 @@
   font-weight: 800;
 }
 
-/* 화면이 좁아지면 중앙 절대배치 대신 자연스럽게 줄바꿈되도록 폴백 */
+.nav-unit-wrap {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 @media (max-width: 560px) {
   .nav-bar {
     flex-direction: column;

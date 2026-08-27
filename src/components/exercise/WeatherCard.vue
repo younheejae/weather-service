@@ -1,12 +1,14 @@
 <script setup>
 import { attractionImageSrc, handleImageError, statusAccentClass } from '@/utils/Weatherhelpers'
+import { useConfigStore } from '@/stores/configStore'
+import { computed } from 'vue'
 
 // props: city(도시 객체), selected(선택 여부), attraction(현재 status에 맞는 추천 관광지)
 // emits:
 //   - select-card: 카드 클릭 시 이 도시를 선택했음을 부모에 전달
 //   - click-detail: [상세보기] 클릭 시 부모에 알림
 
-defineProps({
+const props = defineProps({
   city: {
     type: Object,
     required: true,
@@ -22,6 +24,17 @@ defineProps({
 })
 
 const emit = defineEmits(['select-card', 'click-detail'])
+
+// mock 데이터의 city.temp는 항상 섭씨(celsius) 원본값이라고 가정하고
+// 화면에 보여줄 때만 configStore.unit에 맞게 변환함
+const configStore = useConfigStore()
+
+const displayTemp = computed(() => {
+  if (configStore.unit === 'fahrenheit') {
+    return Math.round((props.city.temp * 9) / 5 + 32)
+  }
+  return props.city.temp
+})
 </script>
 
 <template>
@@ -49,13 +62,14 @@ const emit = defineEmits(['select-card', 'click-detail'])
 
       <div class="meta">
         <span
-          >온도: {{ city.temp }}°C · 습도: {{ city.humidity }}% · 풍속:
+          >온도: {{ displayTemp }}{{ configStore.unitSymbol }} · 습도: {{ city.humidity }}% · 풍속:
           {{ city.windSpeed }}m/s</span
         >
       </div>
 
-      <span v-if="city.temp >= 25" class="badge hot">🔥 더움 (25도 이상)</span>
-      <span v-else class="badge cool">❄️ 선선함 (25도 미만)</span>
+      <!-- 더움/선선함 판정 기준은 단위를 바꿔도 헷갈리지 않도록 항상 원본 섭씨 값(city.temp) 기준으로 고정 -->
+      <span v-if="city.temp >= 25" class="badge hot">🔥 더움</span>
+      <span v-else class="badge cool">❄️ 선선함</span>
     </div>
   </div>
 </template>

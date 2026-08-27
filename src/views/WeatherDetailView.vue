@@ -5,15 +5,22 @@ import { findCityById, findAttraction } from '@/mock/Weatherdata'
 import RecommendedAttraction from '@/components/exercise/RecommendedAttraction.vue'
 import { statusIcon } from '@/utils/Weatherhelpers'
 import IconArrowLeft from '@/components/icons/Iconarrowleft.vue'
+import { useConfigStore } from '@/stores/configStore'
+import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore'
 
 // Router 동적 경로 매칭(:cityId)을 기반으로 Mount 시점에 Mock Data에서 도시 객체 선택
 const route = useRoute()
 const router = useRouter()
+const recentlyViewedStore = useRecentlyViewedStore()
 
 const cityInfo = ref(null)
 
 function loadCity(cityId) {
   cityInfo.value = findCityById(cityId)
+  // 유효한 도시로 확인된 경우에만 최근 본 도시 기록에 추가
+  if (cityInfo.value) {
+    recentlyViewedStore.addCity(cityInfo.value.id)
+  }
 }
 
 onMounted(() => {
@@ -33,13 +40,23 @@ const attraction = computed(() => {
   return findAttraction(cityInfo.value.id, cityInfo.value.status)
 })
 
+const configStore = useConfigStore()
+
+const displayTemp = computed(() => {
+  if (!cityInfo.value) return null
+  if (configStore.unit === 'fahrenheit') {
+    return Math.round((cityInfo.value.temp * 9) / 5 + 32)
+  }
+  return cityInfo.value.temp
+})
+
 // 지정 지역 / 실시간 기온 / 기상 현황 / 대기 습도 / 현재 풍속
 // 하나의 배열로 관리해서 <dl class="detail-grid"> 안에 v-for로 한 번에 렌더링
 const detailRows = computed(() => {
   if (!cityInfo.value) return []
   return [
     { label: '지정 지역', value: `대한민국 ${cityInfo.value.name}` },
-    { label: '실시간 기온', value: `${cityInfo.value.temp}°C` },
+    { label: '실시간 기온', value: `${displayTemp.value}${configStore.unitSymbol}` },
     { label: '기상 현황', value: `${statusIcon(cityInfo.value.status)} ${cityInfo.value.status}` },
     { label: '대기 습도', value: `${cityInfo.value.humidity}%` },
     { label: '현재 풍속', value: `${cityInfo.value.windSpeed}m/s` },

@@ -590,3 +590,198 @@ App (Navigation Bar + RouterView)
 ├── /about → WeatherAboutView
 └── /:pathMatch(.*)* → NotFoundView
 ```
+
+---
+
+## 실습 5: Weather Store (Pinia 스토어 적용)
+
+지금까지 Home/Detail 페이지가 각자 로컬 상태(`ref`)로만 관리하던 값들 중 페이지를 이동해도 유지돼야 하는 값(단위 설정, 최근 방문 기록)을 Pinia 스토어로 옮기는 회차
+
+### 1. `stores/configStore.js` — 날씨 단위를 세팅하는 스토어
+
+| 구분      | 이름         | 설명                                                 |
+| --------- | ------------ | ---------------------------------------------------- |
+| `state`   | `unit`       | 단위를 저장하는 변수 (초기값: `'celsius'`)           |
+| `getters` | `unitSymbol` | 현재 단위 상태에 맞는 기호 (`°C` / `°F`)             |
+| `actions` | `toggleUnit` | `'celsius'`와 `'fahrenheit'`를 토글(스위칭)하는 함수 |
+
+```js
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+
+export const useConfigStore = defineStore('config', () => {
+  const unit = ref('celsius') // state, 초기값 celsius
+
+  const unitSymbol = computed(() => (unit.value === 'fahrenheit' ? '°F' : '°C'))
+
+  function toggleUnit() {
+    unit.value = unit.value === 'celsius' ? 'fahrenheit' : 'celsius'
+  }
+
+  return { unit, unitSymbol, toggleUnit }
+})
+```
+
+실습 2~4에서 계속 써온 `ref`/`computed`/`function` 패턴과 통일감을 위해 **Setup Store** 문법으로 작성했습니다. `main.js`에는 `createPinia()`를 전역 주입했습니다.
+
+```js
+// main.js
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import App from './App.vue'
+import router from './router'
+
+createApp(App).use(createPinia()).use(router).mount('#app')
+```
+
+### 2. `UnitToggler.vue` — 대시보드 상단 단위 변경 UI
+
+처음엔 "날씨단위: °C [단위변경]" 형태의 버튼 하나로 만들었다가 `°C`/`°F` 두 옵션을 나란히 두고 선택된 쪽만 진하게 강조하는 세그먼트 형태로 다시 디자인했습니다.
+
+```html
+<div class="unit-toggler">
+  <button :class="{ active: configStore.unit === 'celsius' }" @click="selectUnit('celsius')">
+    °C
+  </button>
+  <button :class="{ active: configStore.unit === 'fahrenheit' }" @click="selectUnit('fahrenheit')">
+    °F
+  </button>
+</div>
+```
+
+```js
+// toggleUnit은 celsius <-> fahrenheit을 그냥 뒤집기만 하므로
+// 이미 선택된 쪽을 다시 눌렀을 때는 아무 일도 안 일어나도록 한 번 걸러준다.
+function selectUnit(target) {
+  if (configStore.unit !== target) {
+    configStore.toggleUnit()
+  }
+}
+```
+
+### 3. Navigation Bar 옆에 UnitToggler 배치
+
+`App.vue`의 `nav-bar`는 `brand`(왼쪽) + `nav-links`(절대배치로 정중앙 고정) 구조였는데 `UnitToggler`를 세 번째 요소로 추가했습니다.
+
+```html
+<nav class="nav-bar">
+  <RouterLink to="/" class="brand">🌤 날씨 대시보드</RouterLink>
+  <div class="nav-links">...</div>
+  <div class="nav-unit-wrap">
+    <UnitToggler />
+  </div>
+</nav>
+```
+
+### 4. 메인과 상세 날씨에 단위 설정 변경 적용
+
+`WeatherCard.vue`(Home)와 `WeatherDetailView.vue`(Detail) 양쪽에 과제에서 제시한 것과 동일한 형태의 변환 로직을 각각 따로 작성했습니다.
+
+```js
+// WeatherCard.vue 와 WeatherDetailView.vue 각각 따로
+const displayTemp = computed(() => {
+  if (configStore.unit === 'fahrenheit') {
+    return Math.round((props.city.temp * 9) / 5 + 32)
+  }
+  return props.city.temp
+})
+```
+
+- mock 데이터의 `temp`는 항상 섭씨 원본값이라고 가정하고 화면에 표시할 때만 `configStore.unit`에 맞춰 변환합니다.
+- `WeatherCard.vue`의 "🔥 더움 / ❄️ 선선함" 배지 판정 기준은 단위를 바꿔도 헷갈리지 않도록 변환된 표시값이 아니라 항상 원본 섭씨 값(`city.temp >= 25`)을 기준으로 고정했습니다.
+
+### 5. 본인만의 추가 Store — `stores/recentlyViewedStore.js` (최근 본 도시)
+
+`configStore`에 항목을 추가하는 대신 별도의 스토어를 새로 만들었습니다. Detail 페이지를 방문할 때마다 도시를 기록해두고 Home 화면에 "최근 본 도시" 카드로 보여주는 기능입니다.
+
+```js
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import { findCityById } from '@/mock/WeatherData'
+
+const MAX_COUNT = 5
+
+export const useRecentlyViewedStore = defineStore('recentlyViewed', () => {
+  // state: 최근 본 순서대로 도시 id만 저장 (index 0 = 가장 최근)
+  const cityIds = ref([])
+
+  // getter: id 배열을 실제 도시 객체 배열로 변환해서 제공
+  const recentCities = computed(() => cityIds.value.map((id) => findCityById(id)).filter(Boolean))
+
+  // action: 방문 기록 추가 — 중복 제거 + 최대 5개 제한을 한 줄로 처리
+  function addCity(cityId) {
+    cityIds.value = [cityId, ...cityIds.value.filter((id) => id !== cityId)].slice(0, MAX_COUNT)
+  }
+
+  // action: 기록 전체 초기화
+  function clearAll() {
+    cityIds.value = []
+  }
+
+  return { cityIds, recentCities, addCity, clearAll }
+})
+```
+
+`WeatherDetailView.vue`에서는 유효한 도시를 찾았을 때만 기록하도록 연결했습니다.
+
+```js
+function loadCity(cityId) {
+  cityInfo.value = findCityById(cityId)
+  // 유효한 도시로 확인된 경우에만 최근 본 도시 기록에 추가
+  // (존재하지 않는 cityId로 접근한 경우엔 기록하지 않음)
+  if (cityInfo.value) {
+    recentlyViewedStore.addCity(cityInfo.value.id)
+  }
+}
+```
+
+#### `RecentlyViewedChips.vue` — Home 화면에 보여주는 방식
+
+칩을 그냥 나열하는 대신 날씨 상태별 accent 색(`WeatherCard.vue`와 같은 색 체계)이 왼쪽 테두리에 들어간 가로 스크롤 카드로 만들었습니다. 온도는 `configStore.unit`에 맞춰 변환해서 표시해 단위 토글러와 항상 일관되게 동작합니다.
+
+```html
+<button
+  v-for="city in recentlyViewedStore.recentCities"
+  :key="city.id"
+  class="recent-chip"
+  :class="statusAccentClass(city.status)"
+  @click="goToCity(city.id)"
+>
+  <span>{{ city.icon }}</span>
+  <span>{{ city.name }}</span>
+  <span>{{ displayTemp(city) }}{{ configStore.unitSymbol }}</span>
+</button>
+```
+
+**배치 위치**: 기록이 하나도 없으면(`recentCities.length === 0`) 컴포넌트 자체를 렌더링하지 않아서 빈 자리가 남지 않습니다.
+
+```html
+<RecentlyViewedChips v-if="recentlyViewedStore.recentCities.length > 0" />
+```
+
+### 6. 최종 파일 구조 (실습 5 추가분)
+
+```
+src/
+├── stores/
+│   ├── configStore.js            # 날씨 단위(state) / unitSymbol(getter) / toggleUnit(action)
+│   └── recentlyViewedStore.js    # [본인 추가 store] 최근 본 도시 기록
+└── components/
+    └── exercise/
+        ├── UnitToggler.vue           # Navigation Bar 옆 단위 변경 세그먼트 버튼
+        └── RecentlyViewedChips.vue   # [본인 추가] Home에 배치하는 최근 본 도시 카드 목록
+```
+
+### 7. 스토어 ↔ 컴포넌트 연결 관계
+
+```
+useConfigStore (unit, unitSymbol, toggleUnit)
+├── App.vue → UnitToggler.vue        (단위 변경 UI, nav bar 오른쪽 끝)
+├── WeatherCard.vue                  (Home 카드의 표시 온도 변환)
+└── WeatherDetailView.vue            (상세 페이지의 표시 온도 변환)
+└── RecentlyViewedChips.vue          (최근 본 도시 카드의 표시 온도 변환)
+
+useRecentlyViewedStore (cityIds, recentCities, addCity, clearAll)
+├── WeatherDetailView.vue            (방문할 때마다 addCity 호출 — 기록)
+└── WeatherHomeView.vue → RecentlyViewedChips.vue   (recentCities 표시 — 조회 + 이동 + 초기화)
+```
