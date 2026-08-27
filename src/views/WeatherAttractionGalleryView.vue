@@ -52,6 +52,7 @@ function updateSearchQuery(value) {
           <Lazyattractionthumb
             class="gallery-thumb"
             :name="item.name"
+            :city-name="item.cityName"
             :image-file-name="item.image"
             :alt="item.name"
           />

@@ -9,7 +9,7 @@ import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore'
 import { useWeatherStore } from '@/stores/weatherStore'
 import ForecastPanel from '@/components/exercise/ForecastPanel.vue'
 import Skeleton from 'primevue/skeleton'
-import { statusIcon } from '@/utils/WeatherHelpers'
+import { statusIcon } from '@/utils/Weatherhelpers'
 
 // Router 동적 경로 매칭(:cityId)을 기반으로 Mount 시점에 Mock Data에서 도시 객체 선택
 const route = useRoute()
