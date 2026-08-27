@@ -2,7 +2,7 @@
 import { attractionImageSrc, handleImageError, statusAccentClass } from '@/utils/Weatherhelpers'
 import { useConfigStore } from '@/stores/configStore'
 import { computed, watch } from 'vue'
-import { useAttractionImageStore } from '@/stores/Attractionimagestore'
+import { useAttractionImageStore } from '@/stores/attractionimagestore'
 
 // props: city(도시 객체), selected(선택 여부), attraction(현재 status에 맞는 추천 관광지)
 // emits:

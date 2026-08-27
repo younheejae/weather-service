@@ -1,7 +1,7 @@
 <script setup>
 import { attractionImageSrc, handleImageError } from '@/utils/Weatherhelpers'
-import { useAttractionImageStore } from '@/stores/Attractionimagestore'
 import { watch, computed } from 'vue'
+import { useAttractionImageStore } from '@/stores/attractionimagestore'
 
 // props: selectedCityInfo(선택된 도시 객체), recommendedAttraction(추천 관광지)
 // Home에서는 선택 안 했을 때의 안내문구가 필요하지만, Detail 페이지에서는 도시가

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { attractionImageSrc, handleImageError } from '@/utils/Weatherhelpers'
-import { useAttractionImageStore } from '@/stores/Attractionimagestore'
+import { useAttractionImageStore } from '@/stores/attractionimagestore'
 
 // 갤러리처럼 관광지가 40개씩 한 화면에 v-for로 쭉 나오는 경우 마운트되자마자
 // 전부 Unsplash를 검색하면(WeatherCard/RecommendedAttraction과 달리) Demo 등급

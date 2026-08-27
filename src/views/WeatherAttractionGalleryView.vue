@@ -5,7 +5,7 @@ import { statusIcon } from '@/utils/Weatherhelpers'
 import BaseDashboardCard from '@/components/exercise/BaseDashboardCard.vue'
 import SearchBar from '@/components/exercise/SearchBar.vue'
 import HeroBand from '@/components/exercise/HeroBand.vue'
-import Lazyattractionthumb from '@/components/exercise/Lazyattractionthumb.vue'
+import Lazyattractionthumb from '@/components/exercise/LazyAttractionThumb.vue'
 
 // attractionMap(도시 × status)을 평탄화한 40개 관광지를 관광지가 주인공인 카드 그리드로 보여줌
 // 지역/날씨는 관광지 이름 아래 부제(캡션)로만 붙음

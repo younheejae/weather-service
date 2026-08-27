@@ -3,13 +3,13 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { findAttraction } from '@/mock/WeatherData'
 import RecommendedAttraction from '@/components/exercise/RecommendedAttraction.vue'
-import { statusIcon } from '@/utils/Weatherhelpers'
 import IconArrowLeft from '@/components/icons/IconArrowLeft.vue'
 import { useConfigStore } from '@/stores/configStore'
 import { useRecentlyViewedStore } from '@/stores/recentlyViewedStore'
 import { useWeatherStore } from '@/stores/weatherStore'
 import ForecastPanel from '@/components/exercise/ForecastPanel.vue'
 import Skeleton from 'primevue/skeleton'
+import { statusIcon } from '@/utils/WeatherHelpers'
 
 // Router 동적 경로 매칭(:cityId)을 기반으로 Mount 시점에 Mock Data에서 도시 객체 선택
 const route = useRoute()
