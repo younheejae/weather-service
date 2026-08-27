@@ -1,12 +1,12 @@
 # 날씨 (Weather) Mockup — Vue 3 실습
 
-같은 날씨 서비스를 실습 회차별로 점점 고도화하는 과제입니다. 최종 제출 코드는 하나(`WeatherMockup.vue`)지만, 이 README는 **어떤 실습에서 어떤 요구사항을 구현했는지**를 회차별로 정리한 문서입니다.
+같은 날씨 서비스를 실습 회차별로 고도화하는 과제입니다. 최종 제출 코드는 하나(`WeatherMockup.vue`)지만, 이 README는 **어떤 실습에서 어떤 요구사항을 구현했는지**를 회차별로 정리한 문서입니다.
 
 ---
 
 ## 실습 1: Weather Mockup (Vue Syntax)
 
-기본 디렉티브(v-for, v-if, v-model, 이벤트)를 익히는 회차입니다.
+기본 디렉티브(v-for, v-if, v-model, 이벤트)를 익히는 회차
 
 ### 1. 배열 렌더링 (v-for)
 
@@ -57,16 +57,13 @@ function showDetail(cityName, status) {
   | ------------------------- | -------------- | ----------------------------------------------------------- |
   | `v-show`                  | 검색 힌트 문구 | 검색어가 있을 때만 "검색 중인 도시: ○○" 문구를 노출         |
   | `v-bind:class` (`:class`) | 카드           | 선택된 카드에 `selected` 클래스를 동적으로 붙여 테두리 강조 |
-  | `v-bind:title` (`:title`) | 카드           | 마우스를 올리면 툴팁이 뜨도록 속성 바인딩                   |
   | `v-on:click` (`@click`)   | 초기화 버튼    | 클릭 시 검색어를 빈 문자열로 초기화                         |
-
-- **기타**: 검색어 초기화 버튼, `@media (min-width: 900px)` 반응형 레이아웃(넓은 화면에서 폭 확장 + 카드 2열 그리드)
 
 ---
 
 ## 실습 2: Weather Composition (Composition API)
 
-Composition API의 반응형 상태/`computed`/`watch`·`watchEffect`를 익히는 회차입니다. 실습 1의 UI와 데이터를 그대로 이어받아, 아래 요구사항을 추가로 구현했습니다.
+Composition API의 반응형 상태/`computed`/`watch`·`watchEffect`를 익히는 회차
 
 ### 1. 반응형 상태 관리 (1일차 동일)
 
@@ -100,7 +97,7 @@ const filteredWeatherList = computed(() => {
   watch(selectedCityInfo, (newCity, oldCity) => {
     const toLabel = (city) =>
       city ? `"${city.name}"이 선택되었습니다.` : '카드를 클릭하거나 검색해 보세요.'
-    console.log(`[watch] 상태바 문구 변경: "${toLabel(oldCity)}" -> "${toLabel(newCity)}"`)
+    console.log(`[watch] 선택 상태 변경: "${toLabel(oldCity)}" -> "${toLabel(newCity)}"`)
   })
   ```
 
@@ -121,109 +118,46 @@ const filteredWeatherList = computed(() => {
 - 검색어와 일치하는 데이터가 없을 때 → 안내 문구 출력
 
 ```html
-<p class="empty" v-if="filteredWeatherList.length === 0">
-  "{{ searchQuery }}" 검색 결과가 일치하는 도시가 없습니다.
-</p>
+<p class="empty" v-if="filteredWeatherList.length === 0">조건에 맞는 도시가 없습니다.</p>
 ```
 
-### 5. 본인만의 반응형 상태 변수, Computed, Watcher
+### 5. 본인만의 데이터, 반응형 상태 변수, Computed, Watcher
 
-처음에는 "카드 선택 횟수", "더운 도시 개수", "즐겨찾기"처럼 서비스(날씨 → 관광지 추천) 목적과 크게 관련 없거나 부가 기능에 가까운 것들로 채웠는데, 최종적으로는 **지역별 날씨 현황 위 통계 칩을 그대로 클릭 가능한 날씨 필터로 활용**하는 방향으로 정리했습니다. 통계를 "보여주기"만 하는 게 아니라 "필터링에 실제로 쓰이는 상태"로 만든 것입니다.
+실습 1의 5번(본인만의 데이터 추가)을 실습 2 단계에서 **날씨 기반 관광지 추천 기능**으로 확장하고, 여기에 필요한 반응형 상태/computed/watcher를 같이 구성했습니다.
 
-| 종류            | 이름                                 | 설명                                                                                                                                |
-| --------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 반응형 상태     | `statusFilter`                       | `☀️`/`🌥️`/`🌧️`/`❄️` 통계 칩 중 하나를 누르면 해당 날씨인 도시만 걸러서 봄. 다시 누르면 전체 보기로 해제                             |
-| Computed        | `weatherStatusCounts`                | 현재 검색+필터 결과(`filteredWeatherList`) 안에서 맑음/흐림/비/눈 상태별 도시 수를 집계 — "지역 10개 중 어떤 날씨가 몇 곳인지" 통계 |
-| Computed (파생) | `indoorRecommendedCount`             | `weatherStatusCounts`의 비+눈 값을 더해 "실내 관광지 추천이 필요한 도시 수"로 재해석 — 관광지 추천 기능과 직접 연결되는 지표        |
-| Watcher         | `watch(indoorRecommendedCount, ...)` | 검색어나 날씨 필터가 바뀌어 목록이 달라질 때마다, 실내 추천 도시 수가 어떻게 바뀌는지 콘솔로그 작성                                 |
+#### 5-1. 본인만의 데이터: 관광지 추천 데이터 (도시 10 × status 4 = 40개)
 
-```js
-// 반응형 상태: 날씨 필터 (통계 칩을 누르면 토글됨)
-const statusFilter = ref(null) // null = 전체 보기
-
-function toggleStatusFilter(status) {
-  statusFilter.value = statusFilter.value === status ? null : status
-}
-
-// 검색어 + 날씨 필터를 함께 적용
-const filteredWeatherList = computed(() => {
-  const keyword = searchQuery.value.trim()
-  return weatherList.value.filter((city) => {
-    const matchesKeyword = !keyword || city.name.includes(keyword)
-    const matchesStatus = !statusFilter.value || city.status === statusFilter.value
-    return matchesKeyword && matchesStatus
-  })
-})
-
-// computed: 상태별 도시 수 집계
-const weatherStatusCounts = computed(() => {
-  const counts = { 맑음: 0, 흐림: 0, 비: 0, 눈: 0 }
-  for (const city of filteredWeatherList.value) counts[city.status] += 1
-  return counts
-})
-
-// computed(파생): 실내 관광지 추천이 필요한 도시 수
-const indoorRecommendedCount = computed(
-  () => weatherStatusCounts.value['비'] + weatherStatusCounts.value['눈'],
-)
-
-// watcher: 검색/필터로 목록이 바뀌어 indoorRecommendedCount가 달라질 때마다 로그
-watch(indoorRecommendedCount, (newCount, oldCount) => {
-  console.log(`[watch] 실내 관광 추천이 필요한 도시 수 변경: ${oldCount} -> ${newCount}`)
-})
-```
-
-화면에는 지역별 날씨 현황 제목 옆에 `☀️ 3 · 🌥️ 3 · 🌧️ 2 · ❄️ 2` 통계 칩이 있고, 이 칩 자체가 필터 버튼입니다. 필터가 걸려 있으면 그 아래에 "OO인 도시만 보고 있어요 · 전체 보기" 안내가 뜨고, `🏠 지금 N곳은 비·눈이 와서 실내 관광지를 추천드려요.` 안내는 필터/검색 결과에 맞춰 실시간으로 갱신됩니다.
-
-### 상태바 노출 방식 변경
-
-기존에는 도시를 선택하면 상태바에 `"OO"이 선택되었습니다.` 문구가 떴는데, 바로 아래에 있는 추천 관광지 히어로 카드가 이미 어떤 도시가 선택됐는지 보여주기 때문에 문구가 중복이었습니다. 그래서 **아무것도 선택하지 않았을 때만** "카드를 클릭하거나 검색해 보세요." 안내를 보여주고, 도시를 선택하면 이 영역 자체가 사라지도록 바꿨습니다.
-
-```html
-<div class="status-bar status-bar--muted" v-if="!selectedCityInfo">
-  카드를 클릭하거나 검색해 보세요.
-</div>
-```
-
----
-
-## 보너스: 날씨 기반 관광지 추천
-
-지역(도시) 데이터와 날씨 데이터를 결합해서, 선택한 도시의 **현재 날씨에 맞는 관광지를 추천**하는 기능을 추가했습니다.
-
-### status를 4종으로 확정
-
-관광지 추천 데이터를 만들기 전에, `status` 값을 **맑음 / 흐림 / 비 / 눈** 4가지로 확정했습니다. (기존에 있던 "구름"은 흐림·눈 등으로 재배치)
-
-### 관광지 데이터: 도시(10) × status(4) = 40개
-
-도시마다 4가지 날씨 상황에 맞는 관광지를 하나씩 매핑해, 총 40개의 추천 데이터를 만들었습니다.
+관광지 데이터를 만들기 전에 `status` 값을 **맑음 / 흐림 / 비 / 눈** 4가지로 확정했습니다. (기존에 있던 "구름"은 흐림·눈 등으로 재배치) 그리고 도시마다 4가지 날씨 상황에 맞는 관광지를 하나씩 매핑해 총 40개의 추천 데이터를 만들었습니다.
 
 ```js
 const attractionMap = {
   city_01: {
-    맑음: { name: '경복궁', tip: '맑은 날엔 근정전 앞마당이 사진 명소예요.' },
-    흐림: { name: '국립중앙박물관', tip: '흐린 날엔 넓은 상설전시관을 여유롭게 둘러보세요.' },
-    비: { name: '코엑스몰', tip: '비 오는 날엔 실내 쇼핑·전시 공간이 최고예요.' },
-    눈: { name: '남산서울타워', tip: '눈 내린 밤 남산 야경이 정말 예뻐요.' },
+    맑음: {
+      name: '경복궁',
+      tip: '맑은 날엔 근정전 앞마당이 사진 명소예요.',
+      image: 'city_01_sunny.jpg',
+    },
+    흐림: {
+      name: '국립중앙박물관',
+      tip: '흐린 날엔 넓은 상설전시관을 여유롭게 둘러보세요.',
+      image: 'city_01_cloudy.jpg',
+    },
+    비: {
+      name: '코엑스몰',
+      tip: '비 오는 날엔 실내 쇼핑·전시 공간이 최고예요.',
+      image: 'city_01_rainy.jpg',
+    },
+    눈: {
+      name: '남산서울타워',
+      tip: '눈 내린 밤 남산 야경이 정말 예뻐요.',
+      image: 'city_01_snowy.jpg',
+    },
   },
   // ... city_02 ~ city_10 동일 구조
 }
 ```
 
-### 구현 방식: 모달 팝업 대신 상태바 아래 상시 패널
-
-`상세보기` 버튼은 요구사항대로 `window.alert`를 그대로 유지하되, 추천 관광지가 있으면 한 줄을 덧붙이도록 했습니다.
-
-```js
-function showDetail(city) {
-  const attraction = attractionMap[city.id]?.[city.status]
-  const attractionText = attraction ? ` 오늘 같은 날엔 [${attraction.name}] 어때요?` : ''
-  window.alert(`${city.name}의 현재 날씨는 [${city.status}] 상태입니다.${attractionText}`)
-}
-```
-
-이와 별개로, 카드를 클릭해 도시를 선택하면 **상태바 바로 아래에 추천 관광지 패널이 상시 노출**되도록 했습니다. `position: fixed` 오버레이를 쓰는 진짜 모달 팝업은 배경 클릭 닫기·z-index 관리 등이 추가로 필요해 지금 배운 디렉티브 범위를 넘어서기 때문에, 이번 단계에서는 `v-if` + `computed`만으로 구현 가능한 패널 방식을 선택했습니다. (모달은 이후 컴포넌트 분리/Teleport를 배우는 실습에서 업그레이드하기 좋은 지점입니다.)
+이 데이터를 바탕으로 만든 **`recommendedAttraction` computed**는 선택된 도시(`selectedCityInfo`) + 현재 날씨에 맞는 관광지를 뽑아서, 상태바 아래 추천 관광지 히어로 카드에 보여줍니다.
 
 ```js
 const recommendedAttraction = computed(() => {
@@ -233,22 +167,88 @@ const recommendedAttraction = computed(() => {
 })
 ```
 
+`상세보기` 버튼의 `window.alert`에도 추천 관광지가 있으면 한 줄을 자연스럽게 덧붙였습니다.
+
+```js
+function showDetail(city) {
+  const attraction = attractionMap[city.id]?.[city.status]
+  const attractionText = attraction ? ` 오늘 같은 날엔 [${attraction.name}] 어때요?` : ''
+  window.alert(`${city.name}의 현재 날씨는 [${city.status}] 상태입니다.${attractionText}`)
+}
+```
+
+#### 5-2. 본인만의 반응형 상태: `statusFilter` (날씨 필터)
+
+지역별 날씨 현황 위 통계 칩(`☀️`/`🌥️`/`🌧️`/`❄️`)을 그냥 숫자만 보여주는 대신 **클릭 가능한 날씨 필터 버튼**으로 만들었습니다. 하나를 누르면 해당 날씨인 도시만 걸러서 보여주고 다시 누르면 전체 보기로 해제됩니다.
+
+```js
+const statusOrder = ['맑음', '흐림', '비', '눈']
+const statusFilter = ref(null) // null = 전체 보기
+
+function toggleStatusFilter(status) {
+  statusFilter.value = statusFilter.value === status ? null : status
+}
+```
+
+#### 5-3. 본인만의 Computed: `weatherStatusCounts` → `indoorRecommendedCount`
+
+검색어만 반영한 목록(`searchFilteredList`)을 기준으로 맑음/흐림/비/눈 상태별 도시 수를 집계하고("지역 10개 중 어떤 날씨가 몇 곳인지" 통계), 여기서 비+눈 값을 더해 "실내 관광지 추천이 필요한 도시 수"로 재해석했습니다.
+
+```js
+// 1) 검색어만 반영한 목록 (통계 칩 계산용 기준 — 필터 칩을 눌러도 이 목록은 줄어들지 않음)
+const searchFilteredList = computed(() => {
+  const keyword = searchQuery.value.trim()
+  if (!keyword) return weatherList.value
+  return weatherList.value.filter((city) => city.name.includes(keyword))
+})
+
+// 2) 검색어 + 날씨 필터를 함께 적용한 목록 (카드 렌더링용)
+const filteredWeatherList = computed(() =>
+  searchFilteredList.value.filter(
+    (city) => !statusFilter.value || city.status === statusFilter.value,
+  ),
+)
+
+// computed: 검색어만 반영한 목록(searchFilteredList) 기준으로 상태별 도시 수 집계
+const weatherStatusCounts = computed(() => {
+  const counts = { 맑음: 0, 흐림: 0, 비: 0, 눈: 0 }
+  for (const city of searchFilteredList.value) counts[city.status] += 1
+  return counts
+})
+
+// computed(파생): 실내 관광지 추천이 필요한 도시 수
+const indoorRecommendedCount = computed(
+  () => weatherStatusCounts.value['비'] + weatherStatusCounts.value['눈'],
+)
+```
+
+> **버그 수정 노트**: 처음 구현에서는 `weatherStatusCounts`가 (검색어 + 날씨 필터까지 적용된) `filteredWeatherList`를 기준으로 집계해서, 칩 하나를 누르면 그 칩 자신을 제외한 나머지 통계가 전부 0으로 보이는 문제가 있었습니다. 통계 칩은 "필터 버튼"이면서 동시에 "필터링되지 않은 전체 통계"를 보여줘야 하는데, 자기 자신이 만든 필터링 결과를 다시 통계 내다 보니 자기참조 오류가 생긴 것입니다. `searchFilteredList`(검색어만 반영)를 별도로 두고 통계는 여기서 계산하도록 분리해서 해결했습니다.
+
+#### 5-4. 본인만의 Watcher: `watch(indoorRecommendedCount, ...)`
+
+검색어나 날씨 필터가 바뀌어 목록이 달라질 때마다, 실내 추천 도시 수가 어떻게 바뀌는지 콘솔로그로 작성합니다.
+
+```js
+watch(indoorRecommendedCount, (newCount, oldCount) => {
+  console.log(`[watch] 실내 관광 추천이 필요한 도시 수 변경: ${oldCount} -> ${newCount}`)
+})
+```
+
+화면에는 지역별 날씨 현황 제목 옆에 `☀️ 3 · 🌥️ 3 · 🌧️ 2 · ❄️ 2` 통계 칩이 있고 이 칩 자체가 필터 버튼입니다. 필터가 걸려 있으면 그 아래에 "OO인 도시만 보고 있어요 · 전체 보기" 안내가 뜨고, "지금 N곳은 비·눈이 와서 실내 관광지를 추천드려요." 안내는 필터/검색 결과에 맞춰 실시간으로 갱신됩니다.
+
+### 상태바 노출 방식 변경
+
+기존에는 도시를 선택하면 상태바에 `"OO"이 선택되었습니다.` 문구가 떴는데 바로 아래에 있는 추천 관광지 히어로 카드가 이미 어떤 도시가 선택됐는지 보여주기 때문에 문구가 중복이었습니다. 그래서 **아무것도 선택하지 않았을 때만** "카드를 클릭하거나 검색해 보세요." 안내를 보여주고, 도시를 선택하면 이 영역 자체가 사라지도록 바꿨습니다.
+
 ```html
-<div class="recommend-box" v-if="recommendedAttraction">
-  <p class="recommend-title">
-    📍 {{ selectedCityInfo.name }}이(가) 지금 <strong>{{ selectedCityInfo.status }}</strong>일 때
-    추천 관광지
-  </p>
-  <p class="recommend-name">{{ recommendedAttraction.name }}</p>
-  <p class="recommend-tip">{{ recommendedAttraction.tip }}</p>
+<div class="status-bar status-bar--muted" v-if="!selectedCityInfo">
+  카드를 클릭하거나 검색해 보세요.
 </div>
 ```
 
 ---
 
-## 디자인 리뉴얼 & 관광지 이미지
-
-### 이미지 폴더 구조
+## 관광지 이미지 자산 안내
 
 관광지 이미지는 `public/attractions/` 폴더에 넣도록 설계했습니다. Vite 프로젝트에서 `public/` 폴더에 넣은 파일은 빌드 시 그대로 복사되고, 코드에서 `import` 없이 `/attractions/파일명.jpg`처럼 절대경로 문자열로 바로 참조할 수 있어서 40장 가까운 이미지를 다룰 때 가장 간단합니다.
 
@@ -280,26 +280,11 @@ function handleImageError(event, seedText) {
 
 나중에 진짜 사진을 위 표의 파일명 그대로 `public/attractions/`에 넣기만 하면, **코드 수정 없이** 자동으로 실제 사진이 표시됩니다.
 
-### 디자인 리뉴얼 포인트
-
-- Pretendard 가변 폰트를 CDN으로 로드해 타이포그래피 정돈
-- 상단에 히어로 헤더(`hero-header`)를 추가해 페이지 성격을 한눈에 전달
-- 추천 관광지 영역을 배경 이미지 + 그라데이션 오버레이가 있는 **히어로 카드**로 재구성
-- 지역별 날씨 카드에 관광지 썸네일(76×76) 추가, status별로 카드 왼쪽에 색상 강조선(맑음=주황, 흐림=회색, 비=파랑, 눈=하늘색)
-- 그림자·라운드·hover 시 살짝 떠오르는 인터랙션 등 전반적인 톤앤매너를 다듬음
-
 ---
 
-## 실행 방법
-
-```bash
-npm install
-npm run dev
-```
-
-브라우저에서 `http://localhost:5173` 접속 후 확인할 수 있습니다.
-
 ## 파일 구조
+
+이거는 나중에 최종 구조를 보여주기.
 
 ```
 src/

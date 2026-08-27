@@ -1,135 +1,9 @@
-<template>
-  <div class="page-bg">
-    <div class="weather-mockup">
-      <header class="hero-header">
-        <p class="eyebrow">Weather Mockup</p>
-        <h1>오늘, 어디로 떠나볼까요?</h1>
-        <p class="sub">도시를 검색하거나 카드를 눌러 날씨와 추천 관광지를 확인해보세요.</p>
-      </header>
-
-      <div class="panel panel-search">
-        <h2>도시 검색</h2>
-        <div class="search-row">
-          <div class="search-field">
-            <span class="search-icon">⌕</span>
-            <input type="text" v-model="searchQuery" placeholder="검색할 도시 이름 입력 (한글)" />
-          </div>
-          <!-- v-on(@click) 기본 디렉티브 예시: 검색어 초기화 -->
-          <button class="reset-btn" @click="clearSearch">초기화</button>
-        </div>
-        <p class="search-hint" v-show="searchQuery">
-          검색 중인 도시: <strong>{{ searchQuery }}</strong>
-        </p>
-      </div>
-
-      <!-- 아무것도 선택하지 않았을 때만 안내 문구 노출. 선택하면 아래 추천 카드가 그 역할을 대신함 -->
-      <div class="status-bar status-bar--muted" v-if="!selectedCityInfo">
-        카드를 클릭하거나 검색해 보세요.
-      </div>
-
-      <!-- 선택된 도시의 현재 날씨에 맞는 추천 관광지 (히어로 카드) -->
-      <div class="recommend-box" v-if="recommendedAttraction">
-        <img
-          class="recommend-img"
-          :src="attractionImageSrc(recommendedAttraction.image)"
-          :alt="recommendedAttraction.name"
-          @error="handleImageError($event, recommendedAttraction.image)"
-        />
-        <div class="recommend-overlay"></div>
-        <div class="recommend-content">
-          <p class="recommend-eyebrow">
-            {{ selectedCityInfo.name }} · {{ selectedCityInfo.status }}일 때 추천
-          </p>
-          <p class="recommend-name">{{ recommendedAttraction.name }}</p>
-          <p class="recommend-tip">{{ recommendedAttraction.tip }}</p>
-        </div>
-      </div>
-
-      <div class="panel panel-list">
-        <h2>
-          지역별 날씨 현황
-          <span class="stats-group">
-            <button
-              v-for="status in statusOrder"
-              :key="status"
-              type="button"
-              class="stat-chip"
-              :class="{ active: statusFilter === status }"
-              @click="toggleStatusFilter(status)"
-            >
-              {{ statusIcon(status) }} {{ weatherStatusCounts[status] }}
-            </button>
-          </span>
-        </h2>
-
-        <!-- computed(weatherStatusCounts)에서 파생된 2차 지표: 실내 관광지 추천이 필요한 도시 수 -->
-        <p class="indoor-hint" v-if="indoorRecommendedCount > 0">
-          지금 <strong>{{ indoorRecommendedCount }}곳</strong>은 비·눈이 와서 실내 관광지를
-          추천드려요.
-        </p>
-
-        <p class="filter-hint" v-if="statusFilter">
-          {{ statusIcon(statusFilter) }} <strong>{{ statusFilter }}</strong
-          >인 도시만 보고 있어요.
-          <button type="button" class="filter-clear" @click="statusFilter = null">전체 보기</button>
-        </p>
-
-        <div class="card-grid">
-          <div
-            v-for="city in filteredWeatherList"
-            :key="city.id"
-            class="card"
-            :class="[
-              { selected: selectedCityInfo && selectedCityInfo.id === city.id },
-              statusAccentClass(city.status),
-            ]"
-            :title="`${city.name} 카드를 클릭하면 선택돼요`"
-            @click="selectCity(city)"
-          >
-            <img
-              class="card-thumb"
-              :src="attractionImageSrc(attractionMap[city.id][city.status].image)"
-              :alt="attractionMap[city.id][city.status].name"
-              @error="handleImageError($event, attractionMap[city.id][city.status].image)"
-            />
-
-            <div class="card-body">
-              <div class="card-top">
-                <span class="card-title">
-                  {{ city.icon }} {{ city.name }}
-                  <span class="card-status">{{ city.status }}</span>
-                </span>
-                <button class="detail-btn" @click.stop="showDetail(city)">상세보기</button>
-              </div>
-
-              <div class="meta">
-                <span
-                  >온도: {{ city.temp }}°C · 습도: {{ city.humidity }}% · 풍속:
-                  {{ city.windSpeed }}m/s</span
-                >
-              </div>
-
-              <span v-if="city.temp >= 25" class="badge hot">🔥 더움 (25도 이상)</span>
-              <span v-else class="badge cool">❄️ 선선함 (25도 미만)</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 검색어/필터와 일치하는 데이터가 없을 때 안내 -->
-        <p class="empty" v-if="filteredWeatherList.length === 0">조건에 맞는 도시가 없습니다.</p>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref, computed, watch, watchEffect } from 'vue'
 
-/* =========================================================
- * 실습 1: 배열 렌더링(v-for)용 기본 데이터 10개
- *   name, temp, status 외에 humidity(습도), windSpeed(풍속), icon(아이콘) 추가
- *   status는 맑음/흐림/비/눈 4종으로 확정
- * ========================================================= */
+// 실습 1: 배열 렌더링(v-for)용 기본 데이터 10개
+//   name, temp, status 외에 humidity(습도), windSpeed(풍속), icon(아이콘) 추가
+//   status는 맑음/흐림/비/눈 4종
 const weatherList = ref([
   {
     id: 'city_01',
@@ -191,10 +65,8 @@ const weatherList = ref([
   { id: 'city_10', name: '강릉', temp: 21, status: '눈', humidity: 70, windSpeed: 2.8, icon: '❄️' },
 ])
 
-/* =========================================================
- * 관광지 추천 데이터: 도시(10) × status(4) = 40개
- *   image는 public/attractions/ 안에 넣을 파일명 (없으면 자동 placeholder로 대체됨)
- * ========================================================= */
+// 관광지 추천 데이터: 도시(10) × status(4) = 40개
+// image는 public/attractions/ 안에 넣을 파일명 (없으면 자동 placeholder로 대체됨)
 const attractionMap = {
   city_01: {
     맑음: {
@@ -410,16 +282,12 @@ const attractionMap = {
   },
 }
 
-/* =========================================================
- * 실습 2 - 1) 반응형 상태 관리
- * ========================================================= */
+// 실습 2 - 1) 반응형 상태 관리
 const searchQuery = ref('')
 const selectedCityInfo = ref(null) // 선택된 도시의 "객체 전체"를 담음 (null = 선택 안 함)
 
-/* =========================================================
- * 실습 2 - 5) 본인만의 반응형 상태 변수
- *   지역별 날씨 현황 위 통계 칩을 눌러 날씨별로 목록을 필터링
- * ========================================================= */
+// 실습 2 - 5) 본인만의 반응형 상태 변수
+// 지역별 날씨 현황 위 통계 칩을 눌러 날씨별로 목록을 필터링
 const statusOrder = ['맑음', '흐림', '비', '눈']
 const statusFilter = ref(null) // null = 전체 보기, 아니면 '맑음'/'흐림'/'비'/'눈' 중 하나
 
@@ -432,17 +300,19 @@ function statusIcon(status) {
   return map[status] ?? ''
 }
 
-/* =========================================================
- * 실습 2 - 2) 검색 도시 (computed 활용)
- *   검색어 + 날씨 필터(statusFilter)를 함께 적용
- * ========================================================= */
-const filteredWeatherList = computed(() => {
+// 실습 2 - 2) 검색 도시 (computed 활용)
+//   1) searchFilteredList: 검색어만 반영 (통계 칩 계산용 기준)
+//   2) filteredWeatherList: 검색어 + 날씨 필터(statusFilter)까지 반영 (카드 렌더링용)
+const searchFilteredList = computed(() => {
   const keyword = searchQuery.value.trim()
-  return weatherList.value.filter((city) => {
-    const matchesKeyword = !keyword || city.name.includes(keyword)
-    const matchesStatus = !statusFilter.value || city.status === statusFilter.value
-    return matchesKeyword && matchesStatus
-  })
+  if (!keyword) return weatherList.value
+  return weatherList.value.filter((city) => city.name.includes(keyword))
+})
+
+const filteredWeatherList = computed(() => {
+  return searchFilteredList.value.filter(
+    (city) => !statusFilter.value || city.status === statusFilter.value,
+  )
 })
 
 // 선택된 도시 + 현재 status에 맞는 추천 관광지 (없으면 null)
@@ -452,9 +322,7 @@ const recommendedAttraction = computed(() => {
   return cityAttractions ? cityAttractions[selectedCityInfo.value.status] : null
 })
 
-/* =========================================================
- * 실습 2 - 3) 반응형 변수 변화 감시 (watch, watchEffect)
- * ========================================================= */
+// 실습 2 - 3) 반응형 변수 변화 감시 (watch, watchEffect)
 watch(selectedCityInfo, (newCity, oldCity) => {
   const toLabel = (city) =>
     city ? `"${city.name}"이 선택되었습니다.` : '카드를 클릭하거나 검색해 보세요.'
@@ -465,23 +333,18 @@ watchEffect(() => {
   console.log(`[watchEffect] 현재 검색어: "${searchQuery.value}"`)
 })
 
-/* =========================================================
- * 실습 2 - 5) 본인만의 Computed / Watcher
- *   (서비스에 실제로 의미있는 지표로 구성)
- * ========================================================= */
-
-// computed: 현재 검색+필터 결과(filteredWeatherList) 안에서 상태별 도시 수를 집계
-// -> "지금 목록 안에서 맑음/흐림/비/눈이 각각 몇 곳인지" 통계
+// 실습 2 - 5) 본인만의 Computed / Watcher
+// computed: 검색어만 반영한 목록(searchFilteredList) 안에서 상태별 도시 수를 집계
 const weatherStatusCounts = computed(() => {
   const counts = { 맑음: 0, 흐림: 0, 비: 0, 눈: 0 }
-  for (const city of filteredWeatherList.value) {
+  for (const city of searchFilteredList.value) {
     counts[city.status] += 1
   }
   return counts
 })
 
 // computed(파생): weatherStatusCounts를 활용한 2차 지표
-// -> 비/눈인 도시는 실내 관광지를 추천하므로, "실내 관광지 추천이 필요한 도시 수"로 재해석
+// -> 비/눈인 도시는 실내 관광지를 추천하므로 실내 관광지 추천이 필요한 도시 수로 재해석
 const indoorRecommendedCount = computed(
   () => weatherStatusCounts.value['비'] + weatherStatusCounts.value['눈'],
 )
@@ -491,9 +354,7 @@ watch(indoorRecommendedCount, (newCount, oldCount) => {
   console.log(`[watch] 실내 관광 추천이 필요한 도시 수 변경: ${oldCount} -> ${newCount}`)
 })
 
-/* =========================================================
- * 이벤트 핸들러
- * ========================================================= */
+// 이벤트 핸들러
 function selectCity(city) {
   selectedCityInfo.value = city
 }
@@ -509,9 +370,7 @@ function showDetail(city) {
   window.alert(`${city.name}의 현재 날씨는 [${city.status}] 상태입니다.${attractionText}`)
 }
 
-/* =========================================================
- * 이미지 관련 헬퍼
- * ========================================================= */
+// 이미지 관련 헬퍼
 function attractionImageSrc(imageFileName) {
   return `/attractions/${imageFileName}`
 }
@@ -533,24 +392,143 @@ function statusAccentClass(status) {
 }
 </script>
 
+<template>
+  <div class="page-bg">
+    <div class="hero-band">
+      <div class="hero-inner">
+        <p class="eyebrow">Weather Mockup</p>
+        <h1>오늘, 어디로 떠나볼까요?</h1>
+        <p class="sub">도시를 검색하거나 카드를 눌러 날씨와 추천 관광지를 확인해보세요.</p>
+      </div>
+    </div>
+
+    <div class="content-area">
+      <div class="panel panel-search">
+        <h2>도시 검색</h2>
+        <div class="search-row">
+          <div class="search-field">
+            <span class="search-icon">⌕</span>
+            <input type="text" v-model="searchQuery" placeholder="검색할 도시 이름 입력 (한글)" />
+          </div>
+          <!-- v-on(@click) 기본 디렉티브 예시: 검색어 초기화 -->
+          <button class="reset-btn" @click="clearSearch">초기화</button>
+        </div>
+        <p class="search-hint" v-show="searchQuery">
+          검색 중인 도시: <strong>{{ searchQuery }}</strong>
+        </p>
+      </div>
+
+      <!-- 아무것도 선택하지 않았을 때만 안내 문구 노출. 선택하면 아래 추천 카드가 그 역할을 대신함 -->
+      <div class="status-bar status-bar--muted" v-if="!selectedCityInfo">
+        카드를 클릭하거나 검색해 보세요.
+      </div>
+
+      <!-- 선택된 도시의 현재 날씨에 맞는 추천 관광지 (히어로 카드) -->
+      <div class="recommend-box" v-if="recommendedAttraction">
+        <img
+          class="recommend-img"
+          :src="attractionImageSrc(recommendedAttraction.image)"
+          :alt="recommendedAttraction.name"
+          @error="handleImageError($event, recommendedAttraction.image)"
+        />
+        <div class="recommend-overlay"></div>
+        <div class="recommend-content">
+          <p class="recommend-eyebrow">
+            {{ selectedCityInfo.name }} · {{ selectedCityInfo.status }}일 때 추천
+          </p>
+          <p class="recommend-name">{{ recommendedAttraction.name }}</p>
+          <p class="recommend-tip">{{ recommendedAttraction.tip }}</p>
+        </div>
+      </div>
+
+      <div class="panel panel-list">
+        <h2>
+          지역별 날씨 현황
+          <span class="stats-group">
+            <button
+              v-for="status in statusOrder"
+              :key="status"
+              type="button"
+              class="stat-chip"
+              :class="{ active: statusFilter === status }"
+              @click="toggleStatusFilter(status)"
+            >
+              {{ statusIcon(status) }} {{ weatherStatusCounts[status] }}
+            </button>
+          </span>
+        </h2>
+
+        <!-- computed(weatherStatusCounts)에서 파생된 2차 지표: 실내 관광지 추천이 필요한 도시 수 -->
+        <p class="indoor-hint" v-if="indoorRecommendedCount > 0">
+          지금 <strong>{{ indoorRecommendedCount }}곳</strong>은 비·눈이 와서 실내 관광지를
+          추천드려요.
+        </p>
+
+        <p class="filter-hint" v-if="statusFilter">
+          {{ statusIcon(statusFilter) }} <strong>{{ statusFilter }}</strong
+          >인 도시만 보고 있어요.
+          <button type="button" class="filter-clear" @click="statusFilter = null">전체 보기</button>
+        </p>
+
+        <div class="card-grid">
+          <div
+            v-for="city in filteredWeatherList"
+            :key="city.id"
+            class="card"
+            :class="[
+              { selected: selectedCityInfo && selectedCityInfo.id === city.id },
+              statusAccentClass(city.status),
+            ]"
+            @click="selectCity(city)"
+          >
+            <img
+              class="card-thumb"
+              :src="attractionImageSrc(attractionMap[city.id][city.status].image)"
+              :alt="attractionMap[city.id][city.status].name"
+              @error="handleImageError($event, attractionMap[city.id][city.status].image)"
+            />
+
+            <div class="card-body">
+              <div class="card-top">
+                <span class="card-title">
+                  {{ city.icon }} {{ city.name }}
+                  <span class="card-status">{{ city.status }}</span>
+                </span>
+                <button class="detail-btn" @click.stop="showDetail(city)">상세보기</button>
+              </div>
+
+              <div class="meta">
+                <span
+                  >온도: {{ city.temp }}°C · 습도: {{ city.humidity }}% · 풍속:
+                  {{ city.windSpeed }}m/s</span
+                >
+              </div>
+
+              <span v-if="city.temp >= 25" class="badge hot">🔥 더움 (25도 이상)</span>
+              <span v-else class="badge cool">❄️ 선선함 (25도 미만)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 검색어/필터와 일치하는 데이터가 없을 때 안내 -->
+        <p class="empty" v-if="filteredWeatherList.length === 0">조건에 맞는 도시가 없습니다.</p>
+      </div>
+    </div>
+  </div>
+</template>
+
 <style scoped>
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css');
 
-/* ---------- 풀블리드 배경 래퍼 ---------- */
+/* ---------- 배경 구조: 히어로만 남색, 나머지는 연한 회색 캔버스 ---------- */
 .page-bg {
   width: 100%;
   min-height: 100vh;
   display: flex;
-  justify-content: center;
-  background: radial-gradient(
-    circle at 15% 0%,
-    rgba(75, 112, 184, 0.9) 0%,
-    rgba(46, 71, 133, 0.6) 45%,
-    rgba(30, 50, 104, 0.5) 100%
-  );
-}
+  flex-direction: column;
+  align-items: center;
+  background: #eef1f6;
 
-.weather-mockup {
   --card-bg: #ffffff;
   --ink: #101830;
   --sub: #64708a;
@@ -561,34 +539,55 @@ function statusAccentClass(status) {
   --cool: #1d427d;
   --btn-accent: #b8c0cb;
 
-  --panel-bg: #f4f7ff;
-  --panel-line: #e0e7fb;
+  --panel-bg: #ffffff;
+  --panel-line: #e2e6f0;
 
   --accent-sunny: #ffe0c2;
   --accent-cloudy: #fff0b8;
   --accent-rainy: #d8efc5;
   --accent-snowy: #c9e8f5;
 
-  width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 32px 16px 60px;
   font-family:
     'PretendardVariable', 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   color: var(--ink);
   letter-spacing: -0.01em;
 }
 
+.hero-band {
+  width: 100%;
+  background: radial-gradient(circle at 15% 0%, #1c2e66 0%, #101a3d 45%, #0b1330 100%);
+}
+.hero-inner {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 16px;
+  box-sizing: border-box;
+}
 @media (min-width: 900px) {
-  .weather-mockup {
+  .hero-inner {
     max-width: 880px;
-    padding: 48px 32px 90px;
+    padding: 56px 32px 44px;
   }
 }
 
-/* ---------- 헤더 (네이비 배경 위에 직접 놓임) ---------- */
-.hero-header {
-  margin-bottom: 24px;
+.content-area {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+  box-sizing: border-box;
+}
+@media (min-width: 900px) {
+  .content-area {
+    max-width: 880px;
+    padding: 32px 32px 90px;
+  }
+}
+
+/* ---------- 헤더 (남색 히어로 배너 위) ---------- */
+.hero-inner {
+  margin-bottom: 0;
 }
 .eyebrow {
   display: inline-block;
@@ -601,14 +600,14 @@ function statusAccentClass(status) {
   border-radius: 999px;
   margin: 0 0 10px;
 }
-.hero-header h1 {
+.hero-inner h1 {
   font-size: 27px;
   font-weight: 800;
   margin: 0 0 6px;
   letter-spacing: -0.02em;
   color: #ffffff;
 }
-.hero-header .sub {
+.hero-inner .sub {
   font-size: 14px;
   color: #b7c3e8;
   margin: 0;
@@ -621,7 +620,7 @@ function statusAccentClass(status) {
   margin-bottom: 18px;
   background: var(--panel-bg);
   border: 1px solid var(--panel-line);
-  box-shadow: 0 14px 32px rgba(6, 10, 30, 0.28);
+  box-shadow: 0 10px 24px rgba(16, 24, 48, 0.06);
 }
 .panel h2 {
   font-size: 20px;
@@ -664,9 +663,8 @@ function statusAccentClass(status) {
   font-size: 14px;
   color: #315b91;
   background: #eaf5fc;
-  border: 1px solid #b8d8ee;
   border-radius: 12px;
-  padding: 14px 14px;
+  padding: 12px 14px;
   margin: 0 0 10px;
 }
 .filter-hint {
@@ -688,7 +686,7 @@ function statusAccentClass(status) {
   font-size: 12px;
   font-weight: 600;
   border-radius: 999px;
-  padding: 4px 10px;
+  padding: 5px 10px;
   cursor: pointer;
 }
 .filter-clear:hover {
@@ -767,17 +765,17 @@ input[type='text']:focus {
   text-align: center;
   border-radius: 14px;
   padding: 20px 14px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   margin-bottom: 16px;
 }
 .status-bar--muted {
-  background: rgba(255, 255, 255, 0.08);
-  color: #c3cdec;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.08);
   font-weight: 500;
+  border: 1px solid #d9dde3;
 }
-
 /* ---------- 추천 관광지 히어로 카드 ---------- */
 .recommend-box {
   position: relative;
@@ -787,7 +785,7 @@ input[type='text']:focus {
   min-height: 200px;
   display: flex;
   align-items: flex-end;
-  box-shadow: 0 16px 36px rgba(6, 10, 30, 0.35);
+  box-shadow: 0 16px 36px rgba(16, 24, 48, 0.18);
 }
 .recommend-img {
   position: absolute;
@@ -852,31 +850,31 @@ input[type='text']:focus {
     transform 0.1s;
 }
 .card:hover {
-  box-shadow: 0 10px 26px rgba(6, 10, 30, 0.16);
+  box-shadow: 0 10px 26px rgba(16, 24, 48, 0.1);
   transform: translateY(-2px);
 }
 .card.selected {
-  box-shadow: 0 10px 26px rgba(6, 10, 30, 0.16);
+  box-shadow: 0 10px 26px rgba(16, 24, 48, 0.1);
 }
 .card.selected.accent-sunny {
   box-shadow:
     0 0 0 2px var(--accent-sunny),
-    0 10px 26px rgba(6, 10, 30, 0.16);
+    0 10px 26px rgba(16, 24, 48, 0.1);
 }
 .card.selected.accent-cloudy {
   box-shadow:
     0 0 0 2px var(--accent-cloudy),
-    0 10px 26px rgba(6, 10, 30, 0.16);
+    0 10px 26px rgba(16, 24, 48, 0.1);
 }
 .card.selected.accent-rainy {
   box-shadow:
     0 0 0 2px var(--accent-rainy),
-    0 10px 26px rgba(6, 10, 30, 0.16);
+    0 10px 26px rgba(16, 24, 48, 0.1);
 }
 .card.selected.accent-snowy {
   box-shadow:
     0 0 0 2px var(--accent-snowy),
-    0 10px 26px rgba(6, 10, 30, 0.16);
+    0 10px 26px rgba(16, 24, 48, 0.1);
 }
 .accent-sunny {
   border-top-color: var(--accent-sunny);
